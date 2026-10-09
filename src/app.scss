@@ -1,0 +1,24 @@
+// App-shell layout only. Tokens come from dssoca/theme.css; no colour literals, no radius.
+html,
+body,
+#app {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--ss-bg);
+  color: var(--ss-fg);
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
