@@ -3,6 +3,7 @@ import { I } from './core/data'
 
 export const SKEY = 'dos2craft:v1'
 
+export type Lang = 'en' | 'pt-BR'
 export type Tab = 'inv' | 'plan' | 'rec' | 'notes'
 export interface Target {
   k: string
@@ -24,6 +25,8 @@ export interface Persisted {
   theme: '' | 'dark' | 'light'
   /** dssoca size axis: chrome density */
   size: 'sm' | 'md' | 'lg'
+  /** UI language; item and recipe data stay in English */
+  lang: Lang
   /** stock as read from the loaded save */
   base?: Record<string, number> | null
   /** unsaved edits stashed when another save was loaded */
@@ -44,6 +47,7 @@ const fresh = (): Persisted => ({
   zoom: 0.75,
   theme: '',
   size: 'sm',
+  lang: typeof navigator !== 'undefined' && /^pt\b/i.test(navigator.language) ? 'pt-BR' : 'en',
 })
 
 function load(): Persisted {
@@ -70,10 +74,10 @@ export function save() {
   }
 }
 
-/** wipe plan and stock, keep theme and size */
+/** wipe plan and stock, keep theme, size and language */
 export function resetAll() {
-  const { theme, size } = S
-  Object.assign(S, fresh(), { targets: [], tab: 'notes', theme, size, base: null, stash: null, saveName: '', creatable: undefined })
+  const { theme, size, lang } = S
+  Object.assign(S, fresh(), { targets: [], tab: 'notes', theme, size, lang, base: null, stash: null, saveName: '', creatable: undefined })
   save()
 }
 
