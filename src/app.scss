@@ -24,3 +24,11 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+// dssoca's Tooltip root is inline-block, so its line box adds descender space under short
+// triggers like a Badge and they sit low next to text in a flex row. Lay it out as flex instead.
+// (Doubled class: dssoca's own rule is scoped, `.ss-tooltip.svelte-…`, so it needs to be outranked.)
+body .ss-tooltip.ss-tooltip {
+  display: inline-flex;
+  vertical-align: middle;
+}

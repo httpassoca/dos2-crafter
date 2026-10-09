@@ -1,6 +1,6 @@
 <!-- Notes tab: where the data comes from and how the planner counts (legacy #v-notes). -->
 <script lang="ts">
-  import { Heading, Card, Link, Button, Modal, toast } from 'dssoca'
+  import { Heading, Card, Link, Button, Modal, Badge, toast } from 'dssoca'
   import { resetAll } from '../state.svelte'
 
   let confirming = $state(false)
@@ -17,6 +17,11 @@
 <div class="notes">
   <article class="doc">
     <Heading level={1}>Notes on the data</Heading>
+    <p class="lead">
+      Open source on
+      <Link href="https://github.com/httpassoca/dos2-crafter" external>GitHub</Link>. Issues and fixes to recipes or item
+      ids are welcome there.
+    </p>
 
     <Card title="Where this comes from" titleLevel={2}>
       <p>
@@ -114,6 +119,14 @@
           including the level files with trader and world loot. If the save has no copy of it, that item cannot be added.
         </li>
         <li>
+          That is what the <Badge tone="critical">game only</Badge> tag means in the inventory tab: you can make the item,
+          but the loaded save holds no item of that kind to copy, so the page cannot write it into the save. If you craft it
+          here and then write the save, its ingredients are removed and the item is not added, and the write dialog warns
+          you first. Craft it in the game instead, or turn on <strong>only what my save can take</strong> to hide those
+          rows. An item stops being game only once a copy of it exists anywhere in that playthrough's save: in your bags,
+          with a trader or lying in the world.
+        </li>
+        <li>
           The page reads the rebuilt save back before offering it, and refuses if the counts do not come out as planned. It
           has not been tested in the game itself, so always keep a copy of your save folder.
         </li>
@@ -146,6 +159,10 @@
     padding: var(--ss-main-py) var(--ss-main-px) var(--ss-s-16);
   }
   /* one readable column */
+  .lead {
+    margin: 0;
+    color: var(--ss-fg-muted);
+  }
   .doc {
     max-width: calc(var(--ss-s-16) * 12);
     margin: 0 auto;

@@ -22,6 +22,8 @@ export interface Persisted {
   tab: Tab
   zoom: number
   theme: '' | 'dark' | 'light'
+  /** dssoca size axis: chrome density */
+  size: 'sm' | 'md' | 'lg'
   /** stock as read from the loaded save */
   base?: Record<string, number> | null
   /** unsaved edits stashed when another save was loaded */
@@ -41,6 +43,7 @@ const fresh = (): Persisted => ({
   tab: 'inv',
   zoom: 0.75,
   theme: '',
+  size: 'sm',
 })
 
 function load(): Persisted {
@@ -67,10 +70,10 @@ export function save() {
   }
 }
 
-/** wipe plan and stock, keep the theme */
+/** wipe plan and stock, keep theme and size */
 export function resetAll() {
-  const theme = S.theme
-  Object.assign(S, fresh(), { targets: [], tab: 'notes', theme, base: null, stash: null, saveName: '', creatable: undefined })
+  const { theme, size } = S
+  Object.assign(S, fresh(), { targets: [], tab: 'notes', theme, size, base: null, stash: null, saveName: '', creatable: undefined })
   save()
 }
 

@@ -1,6 +1,6 @@
 <!-- One thing you can make: count, item, badges, value, ingredients, and Craft / Plan. -->
 <script lang="ts">
-  import { Badge, Button } from 'dssoca'
+  import { Badge, Button, Tooltip } from 'dssoca'
   import { ptxt, RN, notInSave } from '../core/engine'
   import { P, planRecipe } from '../ui.svelte'
   import ItemChip from './ItemChip.svelte'
@@ -31,21 +31,21 @@
       <span class="note">Not enough left once your queued crafts are done</span>
     {:else}
       {#if x.n > 1}
-        <span title="Crafts needed, counting intermediate items"><Badge tone="caution">{x.n} crafts</Badge></span>
+        <Tooltip text="Crafts needed, counting intermediate items"><Badge tone="caution">{x.n} crafts</Badge></Tooltip>
       {:else}
         <Badge tone="positive">direct</Badge>
       {/if}
-      <span title="Based on its hardest-to-find ingredient"><Badge tone={RAR_TONE[x.rar]}>{RN[x.rar]}</Badge></span>
+      <Tooltip text="Based on its hardest-to-find ingredient"><Badge tone={RAR_TONE[x.rar]}>{RN[x.rar]}</Badge></Tooltip>
       {#if notInSave(x.k)}
-        <span
-          title="Your save has no item of this kind to copy, so it cannot be written into the save. Craft this one in the game."
-          ><Badge tone="critical">game only</Badge></span
+        <Tooltip
+          text="Your save has no item of this kind to copy, so it cannot be written into the save. Craft this one in the game."
+          ><Badge tone="critical">game only</Badge></Tooltip
         >
       {/if}
       {#if r.m === 'kit'}
-        <span title="Needs the Crafter's Kit gift bag mod"><Badge tone="caution">crafter's kit</Badge></span>
+        <Tooltip text="Needs the Crafter's Kit gift bag mod"><Badge tone="caution">crafter's kit</Badge></Tooltip>
       {:else if r.m === 'herb'}
-        <span title="Needs the Herb Gardens gift bag mod"><Badge tone="positive">herb gardens</Badge></span>
+        <Tooltip text="Needs the Herb Gardens gift bag mod"><Badge tone="positive">herb gardens</Badge></Tooltip>
       {/if}
       {#if r.b}<Badge tone="info">enchant</Badge>{/if}
       {#if fx}<span class="note fx">{fx}</span>{/if}

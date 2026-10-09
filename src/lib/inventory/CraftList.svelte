@@ -1,6 +1,6 @@
 <!-- Everything you can make from your inventory: filters, the craft queue and the list. -->
 <script lang="ts">
-  import { Input, Select, SegmentedControl, Switch, Tooltip, Button, EmptyState } from 'dssoca'
+  import { Input, Select, SegmentedControl, Switch, Tooltip, Button, EmptyState, Kbd, shortcut } from 'dssoca'
   import { I, nm, GROUPS } from '../core/data'
   import { SORTS, notInSave } from '../core/engine'
   import { S, IV } from '../state.svelte'
@@ -8,6 +8,8 @@
   import CraftQueue from './CraftQueue.svelte'
   import { C, CF } from './inv.svelte'
   import { haystack, blockedHaystack, type CanItem } from './helpers'
+
+  const SEARCH_ID = 'inv-can-search'
 
   let listEl: HTMLDivElement | undefined = $state()
   const top = () => listEl && (listEl.scrollTop = 0)
@@ -75,18 +77,28 @@
   }
 </script>
 
-<div class="cancol">
+<div
+  class="cancol"
+  {@attach shortcut({
+    id: 'inv:search',
+    label: 'Search what you can make',
+    keys: '/',
+    group: 'Inventory',
+    onPress: () => document.getElementById(SEARCH_ID)?.focus(),
+  })}
+>
   <div class="filters">
     <div class="l1">
       <div class="search">
         <Input
+          id={SEARCH_ID}
+          label="Search"
           bind:value={q}
           oninput={onsearch}
           placeholder="Search by name, ingredient or effect"
-          aria-label="Search what you can make"
           autocomplete="off"
         >
-          {#snippet prefix()}/{/snippet}
+          {#snippet prefix()}<Kbd keys="/" />{/snippet}
         </Input>
       </div>
       <div class="sort">
@@ -187,10 +199,11 @@
     border-bottom: 1px solid var(--ss-line);
     flex: none;
   }
+  // search and sort both carry a label above the control: align their controls on one line
   .l1 {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-end;
     gap: var(--ss-gap);
   }
   .search {
@@ -201,6 +214,13 @@
     display: flex;
     align-items: center;
     gap: var(--ss-gap-xs);
+  }
+  // the count sits on the label line, like a third column header next to SEARCH and SORT
+  .l1 > .k {
+    align-self: flex-start;
+    font-size: var(--ss-ui-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
   .k {
     color: var(--ss-fg-faint);
