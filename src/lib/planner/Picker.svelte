@@ -4,6 +4,7 @@
   import { craftable, nm } from '../core/data'
   import { kind } from '../core/engine'
   import { addTarget } from '../ui.svelte'
+  import { t, kindLabel } from '../i18n/index.svelte'
   import ItemIcon from '../components/ItemIcon.svelte'
 
   const uid = $props.id()
@@ -21,7 +22,7 @@
       toks = s.split(/\s+/).filter(Boolean)
     const f = craftable.filter((k) => {
       const n = nm(k).toLowerCase()
-      return toks.every((t) => n.includes(t))
+      return toks.every((w) => n.includes(w))
     })
     if (s)
       f.sort(
@@ -63,17 +64,17 @@
   }}
   {@attach shortcut(() => ({
     id: 'plan:add',
-    label: 'Add an item to craft',
+    label: t('planner.sc.add'),
     keys: '/',
-    group: 'Planner',
+    group: t('planner.group'),
     onPress: () => rootEl?.querySelector('input')?.focus(),
   }))}
 >
   <Input
     bind:value={() => q, (v) => ((q = v), (hl = 0), (open = true))}
-    placeholder="Add an item to craft, e.g. fire arrow"
+    placeholder={t('planner.pick.placeholder')}
     autocomplete="off"
-    aria-label="Item to craft"
+    aria-label={t('planner.pick.aria')}
     role="combobox"
     aria-autocomplete="list"
     aria-expanded={open}
@@ -85,7 +86,7 @@
   >
     {#snippet prefix()}+{/snippet}
   </Input>
-  <div class="drop" class:on={open} id={listId} role="listbox" aria-label="Craftable items" bind:this={listEl}>
+  <div class="drop" class:on={open} id={listId} role="listbox" aria-label={t('planner.pick.list')} bind:this={listEl}>
     {#each found as k, i (k)}
       <!-- mousedown keeps focus in the input; the keyboard path is the input's arrows + Enter -->
       <div
@@ -102,10 +103,10 @@
       >
         <ItemIcon {k} size={24} />
         <span class="n">{nm(k)}</span>
-        <span class="g">{kind(k)}</span>
+        <span class="g">{kindLabel(kind(k))}</span>
       </div>
     {:else}
-      <div class="empty">Nothing craftable matches “{q.trim()}”.</div>
+      <div class="empty">{t('planner.pick.none', { q: q.trim() })}</div>
     {/each}
   </div>
 </div>

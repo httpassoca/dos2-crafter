@@ -8,6 +8,7 @@
   import CraftQueue from './CraftQueue.svelte'
   import { C, CF } from './inv.svelte'
   import { haystack, blockedHaystack, type CanItem } from './helpers'
+  import { t, groupLabel, sortLabel } from '../i18n/index.svelte'
 
   const SEARCH_ID = 'inv-can-search'
 
@@ -42,7 +43,7 @@
   // a category with nothing left in it falls back to All
   const g = $derived(CF.g !== 'All' && !cnt[CF.g] ? 'All' : CF.g)
   const groups = $derived(
-    GROUPS.filter((x) => x === 'All' || cnt[x]).map((x) => ({ value: x, label: `${x} ${cnt[x] || 0}` })),
+    GROUPS.filter((x) => x === 'All' || cnt[x]).map((x) => ({ value: x, label: `${groupLabel(x)} ${cnt[x] || 0}` })),
   )
 
   const ord = (x: string) => GROUPS.indexOf(x)
@@ -66,8 +67,14 @@
 
   const total = $derived(C.scan.can.length)
   const countText = $derived(
-    total ? (res.length === total ? `${total} items you can make` : `${res.length} of ${total} craftable items`) : '',
+    total
+      ? res.length === total
+        ? t('inventory.list.all', { n: total })
+        : t('inventory.list.some', { m: res.length, n: total })
+      : '',
   )
+
+  const empty = $derived(!has ? 'empty' : total ? 'nomatch' : 'none')
 
   function clearFilters() {
     q = ''
@@ -79,23 +86,23 @@
 
 <div
   class="cancol"
-  {@attach shortcut({
+  {@attach shortcut(() => ({
     id: 'inv:search',
-    label: 'Search what you can make',
+    label: t('inventory.sc.search'),
     keys: '/',
-    group: 'Inventory',
+    group: t('inventory.sc.group'),
     onPress: () => document.getElementById(SEARCH_ID)?.focus(),
-  })}
+  }))}
 >
   <div class="filters">
     <div class="l1">
       <div class="search">
         <Input
           id={SEARCH_ID}
-          label="Search"
+          label={t('inventory.list.search')}
           bind:value={q}
           oninput={onsearch}
-          placeholder="Search by name, ingredient or effect"
+          placeholder={t('inventory.list.searchPh')}
           autocomplete="off"
         >
           {#snippet prefix()}<Kbd keys="/" />{/snippet}
@@ -103,9 +110,9 @@
       </div>
       <div class="sort">
         <Select
-          label="Sort"
+          label={t('inventory.list.sort')}
           bind:value={CF.sort}
-          options={SORTS.map(([value, label]) => ({ value, label }))}
+          options={SORTS.map(([value]) => ({ value, label: sortLabel(value) }))}
           onchange={top}
         />
       </div>
@@ -113,7 +120,7 @@
     </div>
     <div class="groups">
       <SegmentedControl
-        label="Category"
+        label={t('inventory.list.category')}
         options={groups}
         value={g}
         onChange={(v) => {
@@ -124,28 +131,26 @@
     </div>
     <div class="l1">
       <SegmentedControl
-        label="How far to look"
+        label={t('inventory.list.depth')}
         options={[
-          { value: '0', label: 'One craft away' },
-          { value: '1', label: 'Including intermediate crafts' },
+          { value: '0', label: t('inventory.list.depth0') },
+          { value: '1', label: t('inventory.list.depth1') },
         ]}
         value={String(IV.deep)}
         onChange={(v) => (IV.deep = +v)}
       />
-      <Tooltip text="Oven, anvil, campfire, boiling pot, bench saw and well">
-        <Switch label="stations nearby" checked={!!IV.tools} onchange={(v) => (IV.tools = v ? 1 : 0)} />
+      <Tooltip text={t('inventory.list.tools.tip')}>
+        <Switch label={t('inventory.list.tools')} checked={!!IV.tools} onchange={(v) => (IV.tools = v ? 1 : 0)} />
       </Tooltip>
-      <Tooltip
-        text="Hammer, blade, mortar and pestle and other tools you carry. Switch off to count only tools in your inventory."
-      >
-        <Switch label="assume hand tools" checked={!!IV.hand} onchange={(v) => (IV.hand = v ? 1 : 0)} />
+      <Tooltip text={t('inventory.list.hand.tip')}>
+        <Switch label={t('inventory.list.hand')} checked={!!IV.hand} onchange={(v) => (IV.hand = v ? 1 : 0)} />
       </Tooltip>
-      <Tooltip text="Leave out things you already carry at least one of">
-        <Switch label="hide what I already have" bind:checked={CF.own} />
+      <Tooltip text={t('inventory.list.own.tip')}>
+        <Switch label={t('inventory.list.own')} bind:checked={CF.own} />
       </Tooltip>
       {#if S.base}
-        <Tooltip text="Leave out items your save has no copy of. Those can only be crafted in the game.">
-          <Switch label="only what my save can take" bind:checked={CF.wr} />
+        <Tooltip text={t('inventory.list.wr.tip')}>
+          <Switch label={t('inventory.list.wr')} bind:checked={CF.wr} />
         </Tooltip>
       {/if}
     </div>
@@ -156,12 +161,12 @@
   <div class="list" bind:this={listEl}>
     {#each res as x, i (x.k)}
       {#if CF.sort === 'cat' && (i === 0 || res[i - 1].r.g !== x.r.g)}
-        <div class="sec"><span>{x.r.g}</span><span>{cnt[x.r.g]}</span></div>
+        <div class="sec"><span>{groupLabel(x.r.g)}</span><span>{cnt[x.r.g]}</span></div>
       {/if}
       <CanRow {x} />
     {/each}
     {#if blk.length}
-      <div class="sec"><span>Blocked by your queue</span><span>{blk.length}</span></div>
+      <div class="sec"><span>{t('inventory.list.blocked')}</span><span>{blk.length}</span></div>
       {#each blk as x (x.k)}
         <CanRow {x} blocked />
       {/each}
@@ -169,15 +174,11 @@
     {#if !res.length && !blk.length}
       <EmptyState
         variant={has && total ? 'no-results' : 'empty'}
-        title={!has ? 'Tell it what you have' : total ? 'Nothing matches these filters' : 'Nothing craftable yet'}
-        message={!has
-          ? 'Add the items you own on the left, or load a save, and this list fills with everything you can make from them.'
-          : total
-            ? 'Clear the search or pick another category.'
-            : 'No recipe can be completed from this inventory. Try including intermediate crafts, or switch on a gift bag mod in the top bar.'}
+        title={t(`inventory.list.${empty}.title`)}
+        message={t(`inventory.list.${empty}.msg`)}
       >
         {#snippet action()}
-          {#if has && total}<Button onclick={clearFilters}>Clear filters</Button>{/if}
+          {#if has && total}<Button onclick={clearFilters}>{t('inventory.list.clear')}</Button>{/if}
         {/snippet}
       </EmptyState>
     {/if}

@@ -2,11 +2,12 @@
 <script lang="ts">
   import { Modal, Badge, Button, NumberField, Link, Tooltip, Card } from 'dssoca'
   import { I, makes, uses, nm } from '../core/data'
-  import { VAL, RAR, RN, ptxt, recipeFor, enabled, kind } from '../core/engine'
+  import { VAL, RAR, ptxt, recipeFor, enabled, kind } from '../core/engine'
   import { S } from '../state.svelte'
   import { ui, P, closeItem, addTarget, setStock } from '../ui.svelte'
   import ItemIcon from './ItemIcon.svelte'
   import RecipeRow from '../recipes/RecipeRow.svelte'
+  import { t, kindLabel, rarityLabel } from '../i18n/index.svelte'
 
   const USED_MAX = 80
   const RAR_TONE = ['neutral', 'neutral', 'info', 'caution'] as const
@@ -29,7 +30,7 @@
     }
   })
   const valueSource = $derived(
-    it?.v ? (it.vs === 'f' ? 'Value from the Fextralife wiki' : 'Base value from the Crafting Divinity list') : 'Estimated from its ingredients',
+    t(`recipes.drawer.valueSource.${it?.v ? (it.vs === 'f' ? 'fextra' : 'list') : 'est'}`),
   )
   const borrowed = $derived(!!(it as { p?: unknown } | null)?.p)
 
@@ -51,7 +52,7 @@
 <div class="sheet">
   <Modal
     bind:open={() => ui.item !== null, (v) => !v && closeItem()}
-    aria-label={k ? nm(k) : 'Item details'}
+    aria-label={k ? nm(k) : t('recipes.drawer.label')}
   >
     {#snippet header()}
       {#if k && it && eng}
@@ -60,15 +61,15 @@
           <div class="hd-tx">
             <h2>{it.n}</h2>
             <div class="tags">
-              <Badge>{eng.kind}</Badge>
-              {#if mk.length}<Badge tone="positive">{mk.length} recipe{mk.length > 1 ? 's' : ''}</Badge>{/if}
-              {#if us.length}<Badge tone="info">used in {us.length}</Badge>{/if}
+              <Badge>{kindLabel(eng.kind)}</Badge>
+              {#if mk.length}<Badge tone="positive">{t('recipes.drawer.recipes', { n: mk.length })}</Badge>{/if}
+              {#if us.length}<Badge tone="info">{t('recipes.drawer.usedIn', { n: us.length })}</Badge>{/if}
               {#if eng.val}
                 <Tooltip text={valueSource} placement="bottom">
-                  <Badge>value {eng.ptxt}</Badge>
+                  <Badge>{t('recipes.drawer.value', { v: eng.ptxt })}</Badge>
                 </Tooltip>
               {/if}
-              {#if eng.rar}<Badge tone={RAR_TONE[eng.rar]}>{RN[eng.rar]}</Badge>{/if}
+              {#if eng.rar}<Badge tone={RAR_TONE[eng.rar]}>{rarityLabel(eng.rar)}</Badge>{/if}
             </div>
           </div>
         </div>
@@ -78,10 +79,10 @@
     {#if k && it && eng}
       <div class="bd" bind:this={top}>
         <div class="acts">
-          {#if mk.length}<Button variant="primary" onclick={add}>Add to plan</Button>{/if}
+          {#if mk.length}<Button variant="primary" onclick={add}>{t('recipes.drawer.addToPlan')}</Button>{/if}
           <div class="stock">
             <NumberField
-              label="In stock"
+              label={t('recipes.drawer.inStock')}
               min={0}
               bind:value={() => S.stock[k] || 0, (v) => setStock(k, v ?? 0)}
             />
@@ -90,7 +91,7 @@
 
         {#if it.d}
           {@const d = it.d}
-          <Card title={d.e ? (d.s ? 'What the skill does' : 'What it does') : undefined} titleLevel={3}>
+          <Card title={d.e ? (d.s ? t('recipes.drawer.whatSkill') : t('recipes.drawer.whatItem')) : undefined} titleLevel={3}>
             <div class="desc">
               {#if d.e}
                 <ul>
@@ -102,12 +103,12 @@
                   {#each d.m as [a, b], i (i)}
                     <div><dt>{a}</dt><dd>{b}</dd></div>
                   {/each}
-                  {#if eng.val}<div><dt>Value</dt><dd>{eng.ptxt}</dd></div>{/if}
+                  {#if eng.val}<div><dt>{t('recipes.drawer.valueLabel')}</dt><dd>{eng.ptxt}</dd></div>{/if}
                 </dl>
               {/if}
               {#if d.w}
                 <Link size="sm" href="https://divinityoriginalsin2.wiki.fextralife.com/{encodeURI(d.w)}" external
-                  >Full entry on the Fextralife wiki</Link
+                  >{t('recipes.drawer.wiki')}</Link
                 >
               {/if}
             </div>
@@ -115,12 +116,12 @@
         {/if}
 
         {#if borrowed}
-          <p class="faint">No exact icon was found for this item, so it borrows a similar one.</p>
+          <p class="faint">{t('recipes.drawer.borrowed')}</p>
         {/if}
 
         {#if mk.length}
           <section>
-            <Card title="How to make it" titleLevel={3}>
+            <Card title={t('recipes.drawer.howToMake')} titleLevel={3}>
               <div class="rows">
                 {#each mk as r (r.i)}
                   <RecipeRow {r} use={k} cur={eng.cur === r.i} compact />
@@ -129,17 +130,17 @@
             </Card>
             {#if mk.some((r) => !enabled(r))}
               <p class="faint">
-                Recipes that need a gift bag mod are only planned when that mod is switched on in the top bar.
+                {t('recipes.drawer.giftBag')}
               </p>
             {/if}
           </section>
         {:else}
-          <p class="muted">The guide has no recipe for this. Find it, loot it or buy it.</p>
+          <p class="muted">{t('recipes.drawer.noRecipe')}</p>
         {/if}
 
         {#if us.length}
           <section>
-            <Card title="Used in" titleLevel={3}>
+            <Card title={t('recipes.drawer.usedInTitle')} titleLevel={3}>
               <div class="rows">
                 {#each us.slice(0, USED_MAX) as r (r.i)}
                   <RecipeRow {r} compact />
@@ -147,7 +148,7 @@
               </div>
             </Card>
             {#if us.length > USED_MAX}
-              <p class="faint">Showing the first {USED_MAX} of {us.length}. Search the recipes tab for the rest.</p>
+              <p class="faint">{t('recipes.drawer.overflow', { max: USED_MAX, n: us.length })}</p>
             {/if}
           </section>
         {/if}

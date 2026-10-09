@@ -3,6 +3,7 @@
   import type { SearchPaletteItem } from 'dssoca'
   import { I, R, allItems, craftable, nm, makes } from './lib/core/data'
   import { S, type Tab } from './lib/state.svelte'
+  import { t, LANGS } from './lib/i18n/index.svelte'
   import { ui, openItem, addTarget } from './lib/ui.svelte'
   import { MediaQuery } from 'svelte/reactivity'
   import ItemIcon from './lib/components/ItemIcon.svelte'
@@ -12,12 +13,12 @@
   import Recipes from './lib/tabs/Recipes.svelte'
   import Notes from './lib/tabs/Notes.svelte'
 
-  const TABS = [
-    { id: 'inv', label: 'inventory' },
-    { id: 'plan', label: 'planner' },
-    { id: 'rec', label: 'recipes' },
-    { id: 'notes', label: 'notes' },
-  ]
+  const TABS = $derived([
+    { id: 'inv', label: t('app.tab.inv') },
+    { id: 'plan', label: t('app.tab.plan') },
+    { id: 'rec', label: t('app.tab.rec') },
+    { id: 'notes', label: t('app.tab.notes') },
+  ])
 
   // below 1280px the mod switches drop their visible labels (tooltip + accessible name stay)
   const narrow = new MediaQuery('max-width: 1279px')
@@ -26,8 +27,8 @@
   const stats = $derived(
     (S.size || 'sm') === 'sm' && !narrow.current
       ? [
-          { key: 'recipes', value: String(R.length) },
-          { key: 'items', value: String(Object.keys(I).length) },
+          { key: t('app.stat.recipes'), value: String(R.length) },
+          { key: t('app.stat.items'), value: String(Object.keys(I).length) },
         ]
       : [],
   )
@@ -40,24 +41,23 @@
     lg: new MediaQuery('min-width: 1181px'),
   }
   const phone = $derived(!fitsTabs[S.size || 'sm'].current)
-  const NAV = [
-    { id: 'inv', label: 'inventory', icon: 'briefcase' },
-    { id: 'plan', label: 'planner', icon: 'target' },
-    { id: 'rec', label: 'recipes', icon: 'book' },
-    { id: 'notes', label: 'notes', icon: 'note' },
-  ] as const
+  const ICONS = { inv: 'briefcase', plan: 'target', rec: 'book', notes: 'note' } as const
+  const NAV = $derived(TABS.map((x) => ({ ...x, icon: ICONS[x.id as keyof typeof ICONS] })))
 
   // theme: '' follows dssoca's default (dark)
   $effect(() => {
     applyDesignConfig({ theme: S.theme || 'dark', sizeVariant: S.size || 'sm' })
   })
 
-  const SIZES = [
-    { id: 'sm', label: 'small' },
-    { id: 'md', label: 'medium' },
-    { id: 'lg', label: 'large' },
-  ] as const
-  const sizeItems = $derived(SIZES.map((z) => ({ ...z, selected: (S.size || 'sm') === z.id })))
+  const sizeItems = $derived(
+    (['sm', 'md', 'lg'] as const).map((id) => ({ id, label: t(`app.size.${id}`), selected: (S.size || 'sm') === id })),
+  )
+  const langItems = $derived(LANGS.map((l) => ({ id: l.id, label: l.label, selected: S.lang === l.id })))
+  const setLang = (id: string) => (S.lang = id as typeof S.lang)
+  const langShort = $derived(LANGS.find((l) => l.id === S.lang)?.short ?? 'EN')
+  $effect(() => {
+    document.documentElement.lang = S.lang
+  })
   const setSize = (id: string) => (S.size = id as typeof S.size)
 
   const goTab = (t: Tab) => () => (S.tab = t)
@@ -67,15 +67,16 @@
   interface Hit extends SearchPaletteItem {
     k: string
   }
-  const paletteItems: Hit[] = allItems
-    .concat(craftable.filter((k) => !allItems.includes(k)))
-    .map((k) => ({
+  const paletteKeys = allItems.concat(craftable.filter((k) => !allItems.includes(k)))
+  const paletteItems: Hit[] = $derived(
+    paletteKeys.map((k) => ({
       id: k,
       k,
       label: nm(k),
-      group: makes[k] ? 'craftable' : 'material',
+      group: makes[k] ? t('app.palette.craftable') : t('app.palette.material'),
       keywords: [k],
-    }))
+    })),
+  )
 </script>
 
 <svelte:head>
@@ -87,43 +88,46 @@
   class:phone
   {@attach shortcut(() => ({
     id: 'app:theme',
-    label: 'Switch light / dark',
+    label: t('app.sc.theme'),
     keys: 't',
-    group: 'View',
+    group: t('app.sc.groupView'),
     onPress: toggleTheme,
   }))}
-  {@attach shortcut({ id: 'app:tab-inv', label: 'Inventory', keys: '1', group: 'Tabs', onPress: goTab('inv') })}
-  {@attach shortcut({ id: 'app:tab-plan', label: 'Planner', keys: '2', group: 'Tabs', onPress: goTab('plan') })}
-  {@attach shortcut({ id: 'app:tab-rec', label: 'Recipes', keys: '3', group: 'Tabs', onPress: goTab('rec') })}
-  {@attach shortcut({ id: 'app:tab-notes', label: 'Notes', keys: '4', group: 'Tabs', onPress: goTab('notes') })}
+  {@attach shortcut(() => ({ id: 'app:tab-inv', label: t('app.sc.inv'), keys: '1', group: t('app.sc.groupTabs'), onPress: goTab('inv') }))}
+  {@attach shortcut(() => ({ id: 'app:tab-plan', label: t('app.sc.plan'), keys: '2', group: t('app.sc.groupTabs'), onPress: goTab('plan') }))}
+  {@attach shortcut(() => ({ id: 'app:tab-rec', label: t('app.sc.rec'), keys: '3', group: t('app.sc.groupTabs'), onPress: goTab('rec') }))}
+  {@attach shortcut(() => ({ id: 'app:tab-notes', label: t('app.sc.notes'), keys: '4', group: t('app.sc.groupTabs'), onPress: goTab('notes') }))}
 >
   <Topbar
     tabs={phone ? [] : TABS}
     active={S.tab}
-    onTab={(t) => (S.tab = t as Tab)}
+    onTab={(id) => (S.tab = id as Tab)}
     onCommand={() => (ui.palette = true)}
     {stats}
     services={false}
     clock={false}
     skipTarget="#main"
-    ariaLabel="Sections"
+    ariaLabel={t('app.sections')}
   >
     {#snippet brand()}
       <span class="mark" aria-hidden="true"></span><span class="nm" class:sr={phone}>dos2 crafter</span>
     {/snippet}
     {#snippet userMenu()}
-      <div class="mods" role="group" aria-label="Gift bag mods">
-        <Tooltip placement="bottom" text="Crafter's Kit gift bag. Its recipes are only planned when on.">
-          <Switch label="crafter's kit" labelHidden={compactMods} checked={S.mods.kit} onchange={(v) => (S.mods.kit = v)} />
+      <div class="mods" role="group" aria-label={t('app.mods')}>
+        <Tooltip placement="bottom" text={t('app.mods.kitTip')}>
+          <Switch label={t('mod.kit')} labelHidden={compactMods} checked={S.mods.kit} onchange={(v) => (S.mods.kit = v)} />
         </Tooltip>
-        <Tooltip placement="bottom" text="Herb Gardens gift bag. Its recipes are only planned when on.">
-          <Switch label="herb gardens" labelHidden={compactMods} checked={S.mods.herb} onchange={(v) => (S.mods.herb = v)} />
+        <Tooltip placement="bottom" text={t('app.mods.herbTip')}>
+          <Switch label={t('mod.herb')} labelHidden={compactMods} checked={S.mods.herb} onchange={(v) => (S.mods.herb = v)} />
         </Tooltip>
       </div>
-      <Menu items={sizeItems} onSelect={setSize} align="end" label="Size">
-        {#if phone}<span aria-hidden="true">Aa</span><span class="sr">size</span>{:else}size{/if}
+      <Menu items={langItems} onSelect={setLang} align="end" label={t('app.lang')}>
+        <span aria-hidden="true">{langShort}</span><span class="sr">{t('app.lang')}</span>
       </Menu>
-      <Button variant="ghost" iconOnly label="Switch between dark and light" onclick={toggleTheme}>◐</Button>
+      <Menu items={sizeItems} onSelect={setSize} align="end" label={t('app.size')}>
+        {#if phone}<span aria-hidden="true">Aa</span><span class="sr">{t('app.size')}</span>{:else}{t('app.size')}{/if}
+      </Menu>
+      <Button variant="ghost" iconOnly label={t('app.theme')} onclick={toggleTheme}>◐</Button>
     {/snippet}
   </Topbar>
 
@@ -139,16 +143,17 @@
     {/if}
   </main>
   {#if phone}
-    <BottomNav items={[...NAV]} active={S.tab} onSelect={(t) => (S.tab = t as Tab)} ariaLabel="Sections" />
+    <BottomNav items={[...NAV]} active={S.tab} onSelect={(id) => (S.tab = id as Tab)} ariaLabel={t('app.sections')} />
   {/if}
 </div>
 
 <SearchPalette
   bind:open={ui.palette}
   items={paletteItems}
-  placeholder="Find an item…"
-  aria-label="Find an item"
-  emptyText="No item matches"
+  placeholder={t('app.palette.placeholder')}
+  aria-label={t('app.palette.label')}
+  emptyText={t('app.palette.empty')}
+  footerText={t('app.palette.footer')}
   shortcut={false}
   onselect={(h) => openItem(h.k)}
 >
@@ -162,7 +167,7 @@
 </SearchPalette>
 
 <ItemDrawer />
-<ShortcutsHelp />
+<ShortcutsHelp title={t('app.shortcutsTitle')} />
 <Toaster position="bottom-right" />
 
 <style lang="scss">

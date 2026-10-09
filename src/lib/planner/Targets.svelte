@@ -6,43 +6,44 @@
   import { openItem } from '../ui.svelte'
   import ItemIcon from '../components/ItemIcon.svelte'
   import { localEdit } from './track'
+  import { t } from '../i18n/index.svelte'
 
   function setQ(i: number, v: number | null) {
-    const t = S.targets[i]
-    if (!t || v == null || Number.isNaN(v)) return
+    const tg = S.targets[i]
+    if (!tg || v == null || Number.isNaN(v)) return
     const q = Math.max(1, Math.floor(v))
-    if (q === t.q) return
+    if (q === tg.q) return
     localEdit()
-    t.q = q
+    tg.q = q
   }
 </script>
 
 {#if S.targets.length}
-  <ul class="targets" aria-label="Items to craft">
-    {#each S.targets as t, i (t.k)}
+  <ul class="targets" aria-label={t('planner.targets')}>
+    {#each S.targets as tg, i (tg.k)}
       <li class="tgt">
-        <button type="button" class="it" onclick={() => openItem(t.k)} title="Show {nm(t.k)}">
-          <ItemIcon k={t.k} size={24} />
-          <span class="nm">{nm(t.k)}</span>
+        <button type="button" class="it" onclick={() => openItem(tg.k)} title={t('planner.target.show', { name: nm(tg.k) })}>
+          <ItemIcon k={tg.k} size={24} />
+          <span class="nm">{nm(tg.k)}</span>
         </button>
         <div class="q">
           <NumberField
             size="sm"
             min={1}
-            bind:value={() => t.q, (v) => setQ(i, v)}
-            aria-label="Quantity of {nm(t.k)}"
+            bind:value={() => tg.q, (v) => setQ(i, v)}
+            aria-label={t('planner.target.qty', { name: nm(tg.k) })}
           />
         </div>
         <Button
           variant="ghost"
           size="sm"
           iconOnly
-          label="Remove {nm(t.k)} from the plan"
+          label={t('planner.target.remove', { name: nm(tg.k) })}
           onclick={() => S.targets.splice(i, 1)}>✕</Button
         >
       </li>
     {/each}
-    <li><Button variant="ghost" size="sm" onclick={() => (S.targets = [])}>Clear plan</Button></li>
+    <li><Button variant="ghost" size="sm" onclick={() => (S.targets = [])}>{t('planner.clear')}</Button></li>
   </ul>
 {/if}
 

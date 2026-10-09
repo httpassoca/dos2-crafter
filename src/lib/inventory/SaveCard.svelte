@@ -6,7 +6,7 @@
   import Delta from './Delta.svelte'
   import WriteModal from './WriteModal.svelte'
   import { reapplyStash, discardStash } from './inv.svelte'
-  import { plural } from './helpers'
+  import { t } from '../i18n/index.svelte'
 
   const p: [string, number][] = $derived.by(() => {
     void S.base
@@ -19,34 +19,29 @@
   let writing = $state(false)
 </script>
 
-<Card title="Save file" meta={S.saveName || ''}>
+<Card title={t('inventory.save.title')} meta={S.saveName || ''}>
   <div class="body">
     {#if stashN}
-      <p class="warn">
-        You had {stashN}
-        {plural(stashN, 'change')} that were never written to a save. Put them back on top of this save?
-      </p>
+      <p class="warn">{t('inventory.save.stash', { n: stashN })}</p>
       <div class="acts">
-        <Button onclick={reapplyStash}>Reapply them</Button>
-        <Button variant="ghost" onclick={discardStash}>Discard them</Button>
+        <Button onclick={reapplyStash}>{t('inventory.save.reapply')}</Button>
+        <Button variant="ghost" onclick={discardStash}>{t('inventory.save.discard')}</Button>
       </div>
     {/if}
     {#if !p.length}
-      <p class="k">Your inventory here matches this save.</p>
+      <p class="k">{t('inventory.save.matches')}</p>
     {:else}
-      <p class="k">{p.length} {plural(p.length, 'change')} not written to the save yet:</p>
+      <p class="k">{t('inventory.save.pending', { n: p.length })}</p>
       <div class="qis">
         {#each p.slice(0, 14) as [k, d] (k)}
           <Delta {k} changes={[{ n: d }]} />
         {/each}
-        {#if p.length > 14}<span class="k">and {p.length - 14} more</span>{/if}
+        {#if p.length > 14}<span class="k">{t('inventory.save.more', { n: p.length - 14 })}</span>{/if}
       </div>
       {#if loaded}
-        <div class="acts"><Button variant="primary" onclick={() => (writing = true)}>Write changes to save</Button></div>
+        <div class="acts"><Button variant="primary" onclick={() => (writing = true)}>{t('inventory.save.write')}</Button></div>
       {:else}
-        <p class="k">
-          Load {S.saveName || 'the same save'} again to write them. Your changes are kept and will be reapplied.
-        </p>
+        <p class="k">{t('inventory.save.reload', { name: S.saveName || t('inventory.save.sameSave') })}</p>
       {/if}
     {/if}
   </div>

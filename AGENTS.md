@@ -20,4 +20,6 @@ Styled with the **dssoca** design system (npm `dssoca`, source + docs at `../dss
 - Read `P.values` before calling engine `price`/`ptxt`/`RAR`/`VAL`/`recipeFor` so the caller re-runs.
 - core/ is verbatim legacy code pinned by golden tests: change behaviour only on purpose, with a test.
 - No personal data: never commit saves (`fixtures/` is gitignored), profile names, ids or paths.
+- UI text goes through `t()` (`src/lib/i18n/`): one dictionary per area (`en` + `pt` with the same
+  keys and `{placeholders}`, enforced by `test/i18n.test.ts`). Game data (item names, effects) stays English.
 - `pnpm test` (Vitest; golden tests run when `fixtures/*.lsv` exist), `pnpm check`, `pnpm build`.

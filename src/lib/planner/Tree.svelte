@@ -10,6 +10,7 @@
   import ItemIcon from '../components/ItemIcon.svelte'
   import type { Tree, TreeNode } from './types'
   import { grew } from './track'
+  import { t } from '../i18n/index.svelte'
 
   const EXAMPLES = ['giantflameruneofpower', 'cursedfirestormgrenade', 'hugehealingpotion', 'staticcloudarrow', 'fireballskillbook', 'pizza'].filter(
     (k) => I[k],
@@ -51,20 +52,20 @@
         txt = '',
         ri = 0
       if (n.kind === 'craft') {
-        txt = n.n !== n.q || n.out! > 1 ? `craft ${n.n}× (makes ${n.out! * n.n!})` : 'craft'
+        txt = n.n !== n.q || n.out! > 1 ? t('planner.node.craftN', { n: n.n!, m: n.out! * n.n! }) : t('planner.node.craft')
         if (n.nr! > 1) ri = recipesFor(n.k).indexOf(n.r!) + 1
       } else if (n.kind === 'raw') {
         cls += ' ' + mc
-        txt = miss ? 'gather' : 'in stock'
+        txt = miss ? t('planner.node.gather') : t('planner.node.inStock')
       } else if (n.kind === 'tool') {
         q = null
-        txt = n.station ? 'station' : 'tool, not used up'
+        txt = n.station ? t('planner.node.station') : t('planner.node.tool')
       } else if (n.kind === 'held') {
         cls += ' raw ' + mc
-        txt = 'not expanded'
+        txt = t('planner.node.held')
       } else {
         cls = 'held raw ' + mc
-        txt = 'loops back to itself'
+        txt = t('planner.node.cycle')
       }
       let edge: string | null = null
       if (n.parent) {
@@ -100,7 +101,7 @@
   // Fit + centre when something was added to the plan (legacy addTarget), centre on first show.
   let mounted = false
   $effect(() => {
-    const ts = S.targets.map((t) => ({ k: t.k, q: t.q }))
+    const ts = S.targets.map((x) => ({ k: x.k, q: x.q }))
     if (grew(ts)) {
       fit(0.6)
       centerSoon()
@@ -147,23 +148,23 @@
   class="stage"
   {@attach shortcut(() => ({
     id: 'plan:zoom-in',
-    label: 'Zoom the tree in',
+    label: t('planner.sc.zoomIn'),
     keys: '=, +',
-    group: 'Planner',
+    group: t('planner.group'),
     onPress: () => zoomBy(0.1),
   }))}
   {@attach shortcut(() => ({
     id: 'plan:zoom-out',
-    label: 'Zoom the tree out',
+    label: t('planner.sc.zoomOut'),
     keys: '-',
-    group: 'Planner',
+    group: t('planner.group'),
     onPress: () => zoomBy(-0.1),
   }))}
   {@attach shortcut(() => ({
     id: 'plan:fit',
-    label: 'Fit the whole tree',
+    label: t('planner.fit'),
     keys: '0',
-    group: 'Planner',
+    group: t('planner.group'),
     onPress: () => {
       fit(0.3)
       centerSoon()
@@ -185,7 +186,7 @@
         <div
           class="canvas"
           role="group"
-          aria-label="Crafting tree"
+          aria-label={t('planner.tree')}
           style:width="{T.w}px"
           style:height="{T.h}px"
           style:transform="scale({S.zoom})"
@@ -217,31 +218,31 @@
                   {#if v.n.ok}
                     <button
                       type="button"
-                      title="This slot accepts {v.n.on} different items. Switch to the next one"
-                      aria-label="{v.label}: option {v.n.oi! + 1} of {v.n.on}. Switch to the next one"
-                      onclick={() => nextOpt(v.n)}>or {v.n.oi! + 1}/{v.n.on}</button
+                      title={t('planner.opt.title', { n: v.n.on! })}
+                      aria-label={t('planner.opt.aria', { name: v.label, i: v.n.oi! + 1, n: v.n.on! })}
+                      onclick={() => nextOpt(v.n)}>{t('planner.opt.or', { i: v.n.oi! + 1, n: v.n.on! })}</button
                     >
                   {/if}
                   {#if v.n.kind === 'craft'}
                     {#if v.ri}
                       <button
                         type="button"
-                        title="Switch to the next recipe for this item"
-                        aria-label="{v.label}: recipe {v.ri} of {v.n.nr}. Switch to the next recipe"
+                        title={t('planner.recipe.title')}
+                        aria-label={t('planner.recipe.aria', { name: v.label, i: v.ri, n: v.n.nr! })}
                         onclick={() => cycleRecipe(v.n.k)}>⇄ {v.ri}/{v.n.nr}</button
                       >
                     {/if}
                     <button
                       type="button"
-                      title="Stop here: treat this item as something you gather or buy"
-                      aria-label="Stop at {v.label}: treat it as something you gather or buy"
+                      title={t('planner.stop.title')}
+                      aria-label={t('planner.stop.aria', { name: v.label })}
                       onclick={() => toggleCol(v.n.k)}>−</button
                     >
                   {:else if v.n.kind === 'held'}
                     <button
                       type="button"
-                      title="Expand this item's recipe"
-                      aria-label="Expand the recipe for {v.label}"
+                      title={t('planner.expand.title')}
+                      aria-label={t('planner.expand.aria', { name: v.label })}
                       onclick={() => toggleCol(v.n.k)}>+</button
                     >
                   {/if}
@@ -257,8 +258,8 @@
   {#if !S.targets.length}
     <div class="empty">
       <EmptyState
-        title="Pick something to craft"
-        message="The planner draws every ingredient down to raw materials and totals what you need."
+        title={t('planner.empty.title')}
+        message={t('planner.empty.message')}
       >
         {#snippet action()}
           <div class="ex">
@@ -274,26 +275,26 @@
     </div>
   {:else}
     <div class="legend" aria-hidden="true">
-      <span><i class="craft"></i>crafted</span>
-      <span><i class="miss"></i>to gather</span>
-      <span><i class="ok"></i>in stock</span>
-      <span><i class="tool"></i>tool or station</span>
-      <span><i class="held"></i>not expanded</span>
+      <span><i class="craft"></i>{t('planner.legend.craft')}</span>
+      <span><i class="miss"></i>{t('planner.legend.miss')}</span>
+      <span><i class="ok"></i>{t('planner.legend.ok')}</span>
+      <span><i class="tool"></i>{t('planner.legend.tool')}</span>
+      <span><i class="held"></i>{t('planner.legend.held')}</span>
     </div>
-    <div class="zoom" role="group" aria-label="Zoom">
-      <Button size="sm" variant="ghost" iconOnly label="Zoom out" onclick={() => zoomBy(-0.1)}>−</Button>
-      <Tooltip text="Fit the whole tree">
+    <div class="zoom" role="group" aria-label={t('planner.zoom')}>
+      <Button size="sm" variant="ghost" iconOnly label={t('planner.zoomOut')} onclick={() => zoomBy(-0.1)}>−</Button>
+      <Tooltip text={t('planner.fit')}>
         <Button
           size="sm"
           variant="ghost"
-          aria-label="Fit the whole tree (zoom {Math.round(S.zoom * 100)}%)"
+          aria-label={t('planner.fit.aria', { pct: Math.round(S.zoom * 100) })}
           onclick={() => {
             fit(0.3)
             centerSoon()
           }}>{Math.round(S.zoom * 100)}%</Button
         >
       </Tooltip>
-      <Button size="sm" variant="ghost" iconOnly label="Zoom in" onclick={() => zoomBy(0.1)}>+</Button>
+      <Button size="sm" variant="ghost" iconOnly label={t('planner.zoomIn')} onclick={() => zoomBy(0.1)}>+</Button>
     </div>
   {/if}
 </div>

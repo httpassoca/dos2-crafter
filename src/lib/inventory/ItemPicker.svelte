@@ -4,6 +4,7 @@
   import { allItems, nm } from '../core/data'
   import { kind } from '../core/engine'
   import ItemIcon from '../components/ItemIcon.svelte'
+  import { t, kindLabel } from '../i18n/index.svelte'
 
   interface Props {
     onpick: (k: string) => void
@@ -63,9 +64,9 @@
 <div class="picker" {onfocusout}>
   <Input
     bind:value={q}
-    placeholder="Add an item you own"
+    placeholder={t('inventory.pick.placeholder')}
     autocomplete="off"
-    aria-label="Add an item you own"
+    aria-label={t('inventory.pick.placeholder')}
     role="combobox"
     aria-expanded={open}
     aria-controls="{uid}-list"
@@ -82,7 +83,7 @@
     {#snippet prefix()}+{/snippet}
   </Input>
   {#if open}
-    <div class="drop" id="{uid}-list" role="listbox" aria-label="Items">
+    <div class="drop" id="{uid}-list" role="listbox" aria-label={t('inventory.pick.list')}>
       {#each found as k, i (k)}
         <button
           type="button"
@@ -97,10 +98,10 @@
         >
           <ItemIcon {k} size={24} />
           <span class="nm">{nm(k)}</span>
-          <span class="g">{kind(k)}</span>
+          <span class="g">{kindLabel(kind(k))}</span>
         </button>
       {:else}
-        <div class="none">No item matches “{q.trim()}”.</div>
+        <div class="none">{t('inventory.pick.none', { q: q.trim() })}</div>
       {/each}
     </div>
   {/if}

@@ -2,17 +2,18 @@
 <script lang="ts">
   import { Badge, Tooltip } from 'dssoca'
   import type { Recipe } from '../core/data'
+  import { t, kindLabel } from '../i18n/index.svelte'
 
   let { r }: { r: Recipe } = $props()
 </script>
 
 {#if r.m === 'kit'}
-  <Tooltip text="Needs the Crafter's Kit gift bag mod">
-    <Badge tone="caution">crafter's kit</Badge>
+  <Tooltip text={t('mod.kit.tip')}>
+    <Badge tone="caution">{t('mod.kit')}</Badge>
   </Tooltip>
 {:else if r.m === 'herb'}
-  <Tooltip text="Needs the Herb Gardens gift bag mod">
-    <Badge tone="positive">herb gardens</Badge>
+  <Tooltip text={t('mod.herb.tip')}>
+    <Badge tone="positive">{t('mod.herb')}</Badge>
   </Tooltip>
 {/if}
-{#if r.b}<Badge tone="info">enchant</Badge>{/if}
+{#if r.b}<Badge tone="info">{kindLabel('enchant')}</Badge>{/if}

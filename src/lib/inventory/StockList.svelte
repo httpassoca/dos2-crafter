@@ -8,7 +8,7 @@
   import ItemChip from './ItemChip.svelte'
   import ItemPicker from './ItemPicker.svelte'
   import { addStock, removeStock } from './inv.svelte'
-  import { plural } from './helpers'
+  import { t } from '../i18n/index.svelte'
 
   const keys = $derived(
     Object.keys(S.stock)
@@ -27,7 +27,7 @@
   }
 </script>
 
-<Card title="What you have" meta="{keys.length} {plural(keys.length, 'item')}">
+<Card title={t('inventory.stock.title')} meta={t('inventory.stock.count', { n: keys.length })}>
   <div class="pick"><ItemPicker onpick={add} /></div>
   <div class="rows">
     {#each keys as k (k)}
@@ -37,14 +37,14 @@
           <NumberField
             id="iv-{k}"
             min={0}
-            aria-label="How many {nm(k)}"
+            aria-label={t('inventory.stock.howMany', { name: nm(k) })}
             bind:value={() => S.stock[k] ?? null, (v) => v != null && setStock(k, v)}
           />
         </div>
-        <Button variant="ghost" iconOnly label="Remove {nm(k)}" onclick={() => removeStock(k)}>✕</Button>
+        <Button variant="ghost" iconOnly label={t('inventory.stock.remove', { name: nm(k) })} onclick={() => removeStock(k)}>✕</Button>
       </div>
     {:else}
-      <p class="empty">Nothing yet. Add items above or import a list.</p>
+      <p class="empty">{t('inventory.stock.empty')}</p>
     {/each}
   </div>
 </Card>

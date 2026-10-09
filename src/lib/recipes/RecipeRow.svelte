@@ -5,6 +5,7 @@
   import { descLine, type NotedRecipe } from './text'
   import ItemRef from './ItemRef.svelte'
   import ModBadges from './ModBadges.svelte'
+  import { t } from '../i18n/index.svelte'
 
   interface Props {
     r: NotedRecipe
@@ -33,7 +34,7 @@
       <ItemRef {k} {q} out />
     {/each}
     <ModBadges {r} />
-    {#if cur}<span class="sr">(current recipe)</span>{/if}
+    {#if cur}<span class="sr">{t('recipes.row.current')}</span>{/if}
     {#if note}<span class="note">{note}</span>{/if}
   </div>
   <div class="eq" aria-hidden="true">=</div>
@@ -41,14 +42,14 @@
     {#each r.in as e, si (si)}
       {#if si}<span class="sep">+</span>{/if}
       {#each e.o as k, oi (oi)}
-        {#if oi}<span class="sep">or</span>{/if}
+        {#if oi}<span class="sep">{t('recipes.row.or')}</span>{/if}
         <ItemRef {k} q={e.q} tool={!!e.t} />
       {/each}
     {/each}
     {#if r.st}
-      <span class="at">at</span>
+      <span class="at">{t('recipes.row.at')}</span>
       {#each r.st as k, i (i)}
-        {#if i}<span class="sep">or</span>{/if}
+        {#if i}<span class="sep">{t('recipes.row.or')}</span>{/if}
         <ItemRef {k} tool />
       {/each}
     {/if}
@@ -56,11 +57,11 @@
   <div class="acts">
     {#if use}
       <Button size="sm" variant={cur ? 'primary' : 'secondary'} onclick={() => useRecipe(use, r.i)}>
-        {cur ? 'In use' : 'Use this'}
+        {cur ? t('recipes.row.inUse') : t('recipes.row.useThis')}
       </Button>
-      <Button size="sm" variant="ghost" onclick={plan}>Plan</Button>
+      <Button size="sm" variant="ghost" onclick={plan}>{t('plan')}</Button>
     {:else}
-      <Button size="sm" onclick={plan}>Plan</Button>
+      <Button size="sm" onclick={plan}>{t('plan')}</Button>
     {/if}
   </div>
 </div>

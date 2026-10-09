@@ -7,6 +7,8 @@
   import { S, SAVE } from '../state.svelte'
   import Delta from './Delta.svelte'
   import { download, errText, type Change } from './helpers'
+  import { warnMsg, errMsg } from './messages'
+  import { t } from '../i18n/index.svelte'
 
   interface Props {
     open: boolean
@@ -29,7 +31,7 @@
           const c: Change[] = []
           if (o.less) c.push({ n: -o.less })
           if (o.more) c.push({ n: o.more })
-          if (o.neu) c.push({ n: o.neu, note: 'new', title: 'A new stack, copied from another item of this kind in the save' })
+          if (o.neu) c.push({ n: o.neu, note: t('inventory.write.new'), title: t('inventory.write.new.tip') })
           return [k, c] as const
         })
       : [],
@@ -37,14 +39,7 @@
   const noCopy = $derived(res ? res.warn.filter((w) => /no copy/.test(w[1])) : [])
   const newStacks = $derived(res ? res.done.filter((d) => d[0] === 'new').length : 0)
 
-  const titles: Record<Phase, string> = {
-    prep: 'Preparing the save…',
-    review: `Write these changes to ${name}?`,
-    build: 'Building the save…',
-    done: 'Edited save downloaded',
-    prepErr: 'The save could not be prepared',
-    buildErr: 'The save was not written',
-  }
+  const title = $derived(t(`inventory.write.t.${phase}`, { name }))
   const busy = $derived(phase === 'prep' || phase === 'build')
 
   const paint = () => new Promise((r) => setTimeout(r, 30))
@@ -97,66 +92,55 @@
   }
 </script>
 
-<Modal bind:open title={titles[phase]} closeOnBackdrop={!busy} closeOnEsc={!busy} danger={phase.endsWith('Err')}>
+<Modal bind:open {title} closeOnBackdrop={!busy} closeOnEsc={!busy} danger={phase.endsWith('Err')}>
   <div class="body">
     {#if phase === 'prep'}
-      <p class="k"><Spinner label="Reading {name}." showLabel /></p>
+      <p class="k"><Spinner label={t('inventory.write.reading', { name })} showLabel /></p>
     {:else if phase === 'build'}
-      <p class="k"><Spinner label="Compressing and checking. This takes a few seconds." showLabel /></p>
+      <p class="k"><Spinner label={t('inventory.write.building')} showLabel /></p>
     {:else if phase === 'review' && res}
       <section>
-        <h3 class="lbl">Changes</h3>
+        <h3 class="lbl">{t('inventory.write.changes')}</h3>
         <div class="qis">
           {#each rows as [k, c] (k)}
             <Delta {k} changes={c} />
           {:else}
-            <span class="k">Nothing to change</span>
+            <span class="k">{t('inventory.write.nothing')}</span>
           {/each}
         </div>
       </section>
       {#if noCopy.length}
         <p class="warn">
-          <b>
-            The ingredients for {noCopy.map((w) => nm(w[0])).join(', ')} would be removed, but the item itself cannot be added.
-          </b>
-          Undo that craft or lower its count on the page first, unless you are fine losing them.
+          <b>{t('inventory.write.noCopy', { names: noCopy.map((w) => nm(w[0])).join(', ') })}</b>
+          {t('inventory.write.noCopyHint')}
         </p>
       {/if}
       {#if res.warn.length}
         <section>
-          <h3 class="lbl">Could not be done</h3>
+          <h3 class="lbl">{t('inventory.write.failed')}</h3>
           <ul class="wl">
             {#each res.warn as [k, w], i (i)}
-              <li><b>{I[k] ? nm(k) : k}</b>: {w}</li>
+              <li><b>{I[k] ? nm(k) : k}</b>: {warnMsg(w)}</li>
             {/each}
           </ul>
         </section>
       {/if}
       <section class="risk">
-        <h3 class="lbl">Before you load it</h3>
+        <h3 class="lbl">{t('inventory.write.before')}</h3>
         <ul class="wl">
-          <li>
-            Copy the whole save folder somewhere safe first. This file is made by this page, not by the game, and has not
-            been tested in the game.
-          </li>
-          <li>Unzip the download and put <b>{name}</b> in the same save folder, replacing the old one.</li>
+          <li>{t('inventory.write.risk.backup')}</li>
+          <li>{t('inventory.write.risk.unzipPre')} <b>{name}</b> {t('inventory.write.risk.unzipPost')}</li>
           {#if newStacks}
-            <li>
-              {newStacks} new stack{newStacks === 1 ? ' is' : 's are'} created by copying another item of the same kind in
-              your save. These are the riskiest part. If the save misbehaves, try again without them.
-            </li>
+            <li>{t('inventory.write.risk.stacks', { n: newStacks })}</li>
           {/if}
         </ul>
       </section>
     {:else if phase === 'done'}
-      <p class="k">
-        {fname} holds the new {name}. Back up your save folder, then unzip it into that folder, replacing the old file. It
-        read back correctly here; the game is the real test.
-      </p>
+      <p class="k">{t('inventory.write.done', { fname, name })}</p>
     {:else if phase === 'prepErr'}
-      <p class="warn" role="alert">{err}. Nothing was changed.</p>
+      <p class="warn" role="alert">{t('inventory.write.prepErr', { err: errMsg(err) })}</p>
     {:else if phase === 'buildErr'}
-      <p class="warn" role="alert">{err}. Your original save is untouched.</p>
+      <p class="warn" role="alert">{t('inventory.write.buildErr', { err: errMsg(err) })}</p>
     {/if}
   </div>
 
@@ -164,14 +148,14 @@
     {#if phase === 'review' && res}
       {#if res.done.length}
         <Button variant={noCopy.length ? 'secondary' : 'primary'} onclick={build}>
-          {noCopy.length ? 'Download anyway' : 'Download edited save'}
+          {noCopy.length ? t('inventory.write.anyway') : t('inventory.write.download')}
         </Button>
       {/if}
-      <Button variant="ghost" onclick={() => (open = false)}>Cancel</Button>
+      <Button variant="ghost" onclick={() => (open = false)}>{t('cancel')}</Button>
     {:else if phase === 'done'}
-      <Button variant="primary" onclick={() => (open = false)}>Close</Button>
+      <Button variant="primary" onclick={() => (open = false)}>{t('close')}</Button>
     {:else if !busy}
-      <Button onclick={() => (open = false)}>Close</Button>
+      <Button onclick={() => (open = false)}>{t('close')}</Button>
     {/if}
   {/snippet}
 </Modal>

@@ -6,6 +6,7 @@
   import { S } from '../state.svelte'
   import { P, setStock } from '../ui.svelte'
   import ItemLink from './ItemLink.svelte'
+  import { t } from '../i18n/index.svelte'
 
   interface Plan {
     gather: Map<string, number>
@@ -33,47 +34,47 @@
       return { ri, n, r, ins: r.in.map((e, si) => ({ k: optFor(r, si) as string, q: e.q, t: !!e.t })) }
     })
   })
-  const tools = $derived([...res.tools].map((t) => t.split('|')))
+  const tools = $derived([...res.tools].map((x) => x.split('|')))
   const left = $derived(Object.entries(res.left))
 </script>
 
 {#if S.targets.length}
   <div class="metrics">
-    <MetricTile label="crafts to do" value={nc} />
-    <MetricTile label="materials" value={mats.length} />
-    <div class="miss" class:bad={tm} class:good={!tm}><MetricTile label="still missing" value={tm} /></div>
+    <MetricTile label={t('planner.m.crafts')} value={nc} />
+    <MetricTile label={t('planner.m.materials')} value={mats.length} />
+    <div class="miss" class:bad={tm} class:good={!tm}><MetricTile label={t('planner.m.missing')} value={tm} /></div>
   </div>
 
-  <Card title="Materials to gather">
+  <Card title={t('planner.mats')}>
     {#snippet action()}
-      {#if tk}<Badge tone="critical">{tk} short</Badge>{:else}<Badge tone="positive">all in stock</Badge>{/if}
+      {#if tk}<Badge tone="critical">{t('planner.short', { n: tk })}</Badge>{:else}<Badge tone="positive">{t('planner.allInStock')}</Badge>{/if}
     {/snippet}
     <div class="rows">
       {#each mats as [k, m] (k)}
         <div class="row">
           <ItemLink {k} />
-          <span class="k">need</span>
+          <span class="k">{t('planner.need')}</span>
           <span class="v">{m.miss + m.used}</span>
-          <span class="k" aria-hidden="true">have</span>
+          <span class="k" aria-hidden="true">{t('planner.have')}</span>
           <div class="have">
             <NumberField
               size="sm"
               min={0}
               bind:value={() => S.stock[k] || 0, (v) => v != null && !Number.isNaN(v) && setStock(k, v)}
-              aria-label="How many {nm(k)} you have"
+              aria-label={t('planner.have.aria', { name: nm(k) })}
             />
           </div>
-          <span class="v" class:miss={m.miss} class:ok={!m.miss} title={m.miss ? 'missing' : 'covered'}
-            >{m.miss ? '−' + m.miss : '✓'}<span class="sr">{m.miss ? ' missing' : ' covered'}</span></span
+          <span class="v" class:miss={m.miss} class:ok={!m.miss} title={m.miss ? t('planner.missing') : t('planner.covered')}
+            >{m.miss ? '−' + m.miss : '✓'}<span class="sr">{' ' + (m.miss ? t('planner.missing') : t('planner.covered'))}</span></span
           >
         </div>
       {:else}
-        <div class="row"><span class="k">Nothing to gather.</span></div>
+        <div class="row"><span class="k">{t('planner.nothingToGather')}</span></div>
       {/each}
     </div>
   </Card>
 
-  <Card title="Crafting order" meta="bottom of the tree first">
+  <Card title={t('planner.order')} meta={t('planner.order.meta')}>
     <ol class="rows">
       {#each steps as s (s.ri)}
         <li class="step">
@@ -82,26 +83,26 @@
             {#each s.r.out as [k, q] (k)}<ItemLink {k} {q} min={1} />{/each}
           </div>
           <div class="from">
-            <span>from</span>
+            <span>{t('planner.from')}</span>
             {#each s.ins as e, si (si)}<ItemLink k={e.k} q={e.q} min={1} size={20} tool={e.t} chip />{/each}
             {#if s.r.st}
-              <span>at</span>
-              {#each s.r.st as k, j (k)}{#if j}<span>or</span>{/if}<ItemLink {k} size={20} tool chip />{/each}
+              <span>{t('planner.at')}</span>
+              {#each s.r.st as k, j (k)}{#if j}<span>{t('planner.or')}</span>{/if}<ItemLink {k} size={20} tool chip />{/each}
             {/if}
           </div>
         </li>
       {:else}
-        <li class="row"><span class="k">No crafting needed.</span></li>
+        <li class="row"><span class="k">{t('planner.noCrafting')}</span></li>
       {/each}
     </ol>
   </Card>
 
   {#if tools.length}
-    <Card title="Tools and stations" meta="not used up">
+    <Card title={t('planner.tools')} meta={t('planner.tools.meta')}>
       <div class="chips">
         {#each tools as alts, i (i)}
           <span class="alts"
-            >{#each alts as k, j (k)}{#if j}<span class="k">or</span>{/if}<ItemLink
+            >{#each alts as k, j (k)}{#if j}<span class="k">{t('planner.or')}</span>{/if}<ItemLink
                 {k}
                 size={20}
                 tool
@@ -114,7 +115,7 @@
   {/if}
 
   {#if left.length}
-    <Card title="Left over afterwards" meta="byproducts and extras">
+    <Card title={t('planner.left')} meta={t('planner.left.meta')}>
       <div class="chips">
         {#each left as [k, q] (k)}<ItemLink {k} {q} min={1} size={20} chip />{/each}
       </div>

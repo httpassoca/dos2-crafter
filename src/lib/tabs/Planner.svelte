@@ -4,6 +4,7 @@
   import Targets from '../planner/Targets.svelte'
   import Tree from '../planner/Tree.svelte'
   import PlanPanel from '../planner/PlanPanel.svelte'
+  import { t } from '../i18n/index.svelte'
 </script>
 
 <div class="plan">
@@ -13,7 +14,7 @@
   </div>
   <div class="work">
     <Tree />
-    <aside class="side" aria-label="Crafting plan">
+    <aside class="side" aria-label={t('planner.side')}>
       <PlanPanel />
     </aside>
   </div>

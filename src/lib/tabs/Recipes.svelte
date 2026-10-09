@@ -5,6 +5,7 @@
   import { F, resetFilters } from '../recipes/filters.svelte'
   import { matches, secName, tokens, type ModFilter } from '../recipes/text'
   import RecipeRow from '../recipes/RecipeRow.svelte'
+  import { t, groupLabel } from '../i18n/index.svelte'
 
   const PAGE = 50
   const SEARCH_ID = 'rq'
@@ -12,25 +13,24 @@
   // category counts over the whole guide, like the original
   const counts: Record<string, number> = { All: R.length }
   R.forEach((r) => (counts[r.g] = (counts[r.g] || 0) + 1))
-  const groupOptions = GROUPS.map((g) => ({ value: g, label: `${g} ${counts[g] || 0}` }))
-  const modOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'base', label: 'Base game' },
-    { value: 'kit', label: "Crafter's kit" },
-    { value: 'herb', label: 'Herb gardens' },
-  ]
+  const groupOptions = $derived(
+    GROUPS.map((g) => ({ value: g, label: t('recipes.groupOption', { group: groupLabel(g), n: counts[g] || 0 }) })),
+  )
+  const modOptions = $derived(
+    (['all', 'base', 'kit', 'herb'] as const).map((value) => ({ value, label: t(`recipes.version.${value}`) })),
+  )
 
   // search box value; F.q follows it after a short pause
   let q = $state(F.q)
   $effect(() => {
     const v = q
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       if (F.q !== v) {
         F.q = v
         F.page = 1
       }
     }, 120)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   })
 
   const list = $derived.by(() => {
@@ -73,13 +73,13 @@
 
 <div
   class="recipes"
-  {@attach shortcut({
+  {@attach shortcut(() => ({
     id: 'rec:search',
-    label: 'Search recipes',
+    label: t('recipes.search'),
     keys: '/',
-    group: 'Recipes',
+    group: t('recipes.shortcutGroup'),
     onPress: () => document.getElementById(SEARCH_ID)?.focus(),
-  })}
+  }))}
 >
   <div class="filters">
     <div class="l1">
@@ -88,22 +88,22 @@
           id={SEARCH_ID}
           bind:value={q}
           type="search"
-          placeholder="Search results, ingredients or effects"
+          placeholder={t('recipes.searchPlaceholder')}
           autocomplete="off"
-          aria-label="Search recipes"
+          aria-label={t('recipes.search')}
           clearable
         >
           {#snippet prefix()}<Kbd keys="/" />{/snippet}
         </Input>
       </div>
-      <SegmentedControl label="Game version" options={modOptions} value={F.m} onChange={setMod} />
-      <span class="count" aria-live="polite">{list.length} of {R.length}</span>
+      <SegmentedControl label={t('recipes.version')} options={modOptions} value={F.m} onChange={setMod} />
+      <span class="count" aria-live="polite">{t('recipes.count', { n: list.length, total: R.length })}</span>
       {#if filtered}
-        <Button variant="ghost" size="sm" onclick={reset}>Reset filters</Button>
+        <Button variant="ghost" size="sm" onclick={reset}>{t('recipes.resetFilters')}</Button>
       {/if}
     </div>
     <div class="groups">
-      <SegmentedControl label="Category" options={groupOptions} value={F.g} onChange={setGroup} />
+      <SegmentedControl label={t('recipes.category')} options={groupOptions} value={F.g} onChange={setGroup} />
     </div>
   </div>
 
@@ -111,11 +111,11 @@
     {#if !list.length}
       <EmptyState
         variant="no-results"
-        title="No recipes match"
-        message="Try a shorter search, or switch the category back to All."
+        title={t('recipes.empty.title')}
+        message={t('recipes.empty.message')}
       >
         {#snippet action()}
-          <Button onclick={reset}>Clear filters</Button>
+          <Button onclick={reset}>{t('recipes.clearFilters')}</Button>
         {/snippet}
       </EmptyState>
     {:else}
@@ -128,7 +128,7 @@
         <RecipeRow {r} />
       {/each}
       {#if pages > 1}
-        <nav class="pager" aria-label="Recipe pages">
+        <nav class="pager" aria-label={t('recipes.pages')}>
           <Pagination page={page} pageCount={pages} onchange={setPage} />
         </nav>
       {/if}

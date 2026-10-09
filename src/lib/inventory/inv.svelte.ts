@@ -6,12 +6,14 @@ import { evalQueue, scanCan, pending, importText } from '../core/engine'
 import { saveInventory, xmlInventory, importSave, statKey, levelCreatable } from '../core/save'
 import { S, IV, Q, SAVE, type QueueEntry } from '../state.svelte'
 import { P } from '../ui.svelte'
-import { plural, errText, type CanItem } from './helpers'
+import { errText, type CanItem } from './helpers'
+import { importMsg, errMsg } from './messages'
+import { t } from '../i18n/index.svelte'
 
 /** filters of the craftable list (kept while switching tabs, not persisted) */
 export const CF = $state({ q: '', g: 'All', sort: 'cat', own: false, wr: false })
 
-/** text box, inline result of the last import and the file being read */
+/** text box, inline result of the last import (core's English text, localised when shown) and the file being read */
 export const inv = $state({
   text: '',
   result: null as null | { text: string; skip?: string[]; warn?: boolean },
@@ -74,23 +76,23 @@ export function removeStock(k: string) {
   delete S.stock[k]
 }
 
-export function importList(t: string) {
-  if (!t.trim()) {
-    toast.info('Paste a list first, one item per line.')
+export function importList(text: string) {
+  if (!text.trim()) {
+    toast.info(t('inventory.toast.pasteFirst'))
     return
   }
-  const msg: string = importText(t)
+  const msg: string = importText(text)
   const cut = msg.indexOf(' Not recognised: ')
   if (!msg.startsWith('Imported')) {
-    toast.error(msg)
+    toast.error(importMsg(msg))
     return
   }
   if (cut < 0) {
     inv.result = null
-    toast.success(msg)
+    toast.success(importMsg(msg))
   } else {
     inv.result = { text: msg, warn: true }
-    toast.info(msg.slice(0, cut))
+    toast.info(importMsg(msg.slice(0, cut)))
   }
 }
 
@@ -107,7 +109,7 @@ export function emptyInventory() {
   S.stash = null
   Q.length = 0
   inv.result = null
-  toast.success('Inventory emptied.')
+  toast.success(t('inventory.toast.emptied'))
 }
 
 /** put changes stashed before loading this save back on top of it */
@@ -131,11 +133,11 @@ type SaveData = { chars: any[]; items: { Stats?: string }[] }
 export async function loadFile(f: File) {
   if (!/\.(lsv|lsf|lsx|xml)$/i.test(f.name)) {
     try {
-      const t = await f.text()
-      inv.text = t
-      importList(t)
+      const text = await f.text()
+      inv.text = text
+      importList(text)
     } catch (e) {
-      toast.error('That file could not be read: ' + errText(e) + '.')
+      toast.error(t('inventory.toast.fileErr', { err: errMsg(errText(e)) }))
     }
     return
   }
@@ -150,7 +152,7 @@ export async function loadFile(f: File) {
     if (my !== seq) return
     applySave(d, f.name, u8)
   } catch (e) {
-    if (my === seq) toast.error('That save could not be read: ' + errText(e) + '. Nothing was changed.')
+    if (my === seq) toast.error(t('inventory.toast.saveErr', { err: errMsg(errText(e)) }))
   } finally {
     if (my === seq) inv.loading = ''
   }
@@ -173,7 +175,7 @@ function applySave(d: SaveData, name: string, u8: Uint8Array | null) {
   IV.hand = 0
   inv.text = ''
   inv.result = { text: r.msg, skip: [...r.skip].sort() }
-  toast.success('Loaded ' + name + '.')
+  toast.success(t('inventory.toast.loaded', { name }))
   if (SAVE.file && u8) scanLevels(u8)
 }
 
@@ -230,14 +232,14 @@ export function craftQueue() {
   UNDO = { ...S.stock }
   S.stock = ev.st
   Q.length = 0
-  toast.success(`Crafted ${n} ${plural(n, 'item')}.`, {
+  toast.success(t('inventory.toast.crafted', { n }), {
     timeout: 10_000,
-    action: { label: 'Undo', onClick: undoCraft },
+    action: { label: t('inventory.toast.undo'), onClick: undoCraft },
   })
 }
 function undoCraft() {
   if (!UNDO) return
   S.stock = UNDO
   UNDO = null
-  toast.info('Last craft undone.')
+  toast.info(t('inventory.toast.undone'))
 }

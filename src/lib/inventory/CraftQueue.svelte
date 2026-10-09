@@ -7,7 +7,7 @@
   import ItemIcon from '../components/ItemIcon.svelte'
   import Delta from './Delta.svelte'
   import { C, qinc, qdec, qrm, qclear, craftQueue } from './inv.svelte'
-  import { plural } from './helpers'
+  import { t } from '../i18n/index.svelte'
 
   type Diff = { used: [string, number][]; got: [string, number][] }
   const ev = $derived(C.scan.ev)
@@ -19,7 +19,7 @@
   let review = $state(false)
 
   function more(i: number) {
-    if (!qinc(i)) toast.info(`Not enough materials for one more ${nm(Q[i].k)}.`)
+    if (!qinc(i)) toast.info(t('inventory.queue.noMore', { name: nm(Q[i].k) }))
   }
   function done() {
     review = false
@@ -28,10 +28,10 @@
 </script>
 
 {#if Q.length}
-  <section class="queue" aria-label="Crafting queue">
+  <section class="queue" aria-label={t('inventory.queue.title')}>
     <div class="qh">
-      <span class="lbl">Crafting queue</span>
-      <span class="k">{total} to craft, using {df.used.length} {plural(df.used.length, 'kind')} of item</span>
+      <span class="lbl">{t('inventory.queue.title')}</span>
+      <span class="k">{t('inventory.queue.summary', { n: df.used.length, total })}</span>
     </div>
     <div class="ql">
       {#each Q as q, i (q.k)}
@@ -39,40 +39,40 @@
           <ItemIcon k={q.k} size={24} />
           <span class="nm">{nm(q.k)}</span>
           <span class="qn">×{q.n}</span>
-          <Button variant="ghost" size="sm" iconOnly label="One less {nm(q.k)}" onclick={() => qdec(i)}>−</Button>
-          <Button variant="ghost" size="sm" iconOnly label="One more {nm(q.k)}" onclick={() => more(i)}>+</Button>
-          <Button variant="ghost" size="sm" iconOnly label="Remove {nm(q.k)} from the queue" onclick={() => qrm(i)}
-            >✕</Button
+          <Button variant="ghost" size="sm" iconOnly label={t('inventory.queue.less', { name: nm(q.k) })} onclick={() => qdec(i)}>−</Button>
+          <Button variant="ghost" size="sm" iconOnly label={t('inventory.queue.more', { name: nm(q.k) })} onclick={() => more(i)}>+</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            label={t('inventory.queue.remove', { name: nm(q.k) })}
+            onclick={() => qrm(i)}>✕</Button
           >
         </span>
       {/each}
     </div>
     <div class="qa">
-      <Button variant="primary" onclick={() => (review = true)}>Review and craft</Button>
-      <Button variant="ghost" onclick={qclear}>Clear queue</Button>
+      <Button variant="primary" onclick={() => (review = true)}>{t('inventory.queue.review')}</Button>
+      <Button variant="ghost" onclick={qclear}>{t('inventory.queue.clear')}</Button>
     </div>
   </section>
 {/if}
 
-<Modal bind:open={review} title="Craft {total} {plural(total, 'item')}?">
+<Modal bind:open={review} title={t('inventory.review.title', { n: total })}>
   <div class="body">
-    <p class="k">
-      {crafts}
-      {plural(crafts, 'craft')} in total, counting intermediate items. Your inventory on this page changes; your save only
-      changes when you write it.
-    </p>
+    <p class="k">{t('inventory.review.crafts', { n: crafts })}</p>
     <section>
-      <h3 class="lbl">Used up</h3>
+      <h3 class="lbl">{t('inventory.review.used')}</h3>
       <div class="qis">
         {#each df.used as [k, n] (k)}
           <Delta {k} changes={[{ n: -n }]} />
         {:else}
-          <span class="k">Nothing</span>
+          <span class="k">{t('inventory.review.nothing')}</span>
         {/each}
       </div>
     </section>
     <section>
-      <h3 class="lbl">You get</h3>
+      <h3 class="lbl">{t('inventory.review.got')}</h3>
       <div class="qis">
         {#each df.got as [k, n] (k)}
           <Delta {k} changes={[{ n }]} />
@@ -80,18 +80,17 @@
       </div>
     </section>
     {#if ev && ev.bad.length}
-      <p class="warn">{ev.bad.map((q) => nm(q.k)).join(', ')} can no longer be made and will be skipped.</p>
+      <p class="warn">{t('inventory.review.bad', { names: ev.bad.map((q) => nm(q.k)).join(', ') })}</p>
     {/if}
     {#if gameOnly.length}
       <p class="warn">
-        {gameOnly.map((q) => nm(q.k)).join(', ')}: your save has no item of this kind to copy, so writing to the save would
-        remove the ingredients without adding it. Craft {gameOnly.length === 1 ? 'it' : 'them'} in the game instead.
+        {t('inventory.review.gameOnly', { n: gameOnly.length, names: gameOnly.map((q) => nm(q.k)).join(', ') })}
       </p>
     {/if}
   </div>
   {#snippet footer()}
-    <Button variant="primary" disabled={!Q.length} onclick={done}>Done, craft them</Button>
-    <Button variant="ghost" onclick={() => (review = false)}>Back</Button>
+    <Button variant="primary" disabled={!Q.length} onclick={done}>{t('inventory.review.done')}</Button>
+    <Button variant="ghost" onclick={() => (review = false)}>{t('inventory.review.back')}</Button>
   {/snippet}
 </Modal>
 

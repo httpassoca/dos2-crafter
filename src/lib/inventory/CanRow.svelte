@@ -1,11 +1,12 @@
 <!-- One thing you can make: count, item, badges, value, ingredients, and Craft / Plan. -->
 <script lang="ts">
   import { Badge, Button, Tooltip } from 'dssoca'
-  import { ptxt, RN, notInSave } from '../core/engine'
+  import { ptxt, notInSave } from '../core/engine'
   import { P, planRecipe } from '../ui.svelte'
   import ItemChip from './ItemChip.svelte'
   import { qadd } from './inv.svelte'
   import { descLine, RAR_TONE, type CanItem } from './helpers'
+  import { t, rarityLabel } from '../i18n/index.svelte'
 
   interface Props {
     x: CanItem
@@ -25,29 +26,32 @@
 
 <div class="rec" class:blocked>
   <div class="res">
-    {#if !blocked}<span class="mx" title="How many you can make">{x.mx >= 50 ? '50+' : x.mx}×</span>{/if}
+    {#if !blocked}<span class="mx" title={t('inventory.can.max')}>{x.mx >= 50 ? '50+' : x.mx}×</span>{/if}
     <ItemChip k={x.k} main />
     {#if blocked}
-      <span class="note">Not enough left once your queued crafts are done</span>
+      <span class="note">{t('inventory.can.blocked')}</span>
     {:else}
       {#if x.n > 1}
-        <Tooltip text="Crafts needed, counting intermediate items"><Badge tone="caution">{x.n} crafts</Badge></Tooltip>
+        <Tooltip text={t('inventory.can.crafts.tip')}
+          ><Badge tone="caution">{t('inventory.can.crafts', { n: x.n })}</Badge></Tooltip
+        >
       {:else}
-        <Badge tone="positive">direct</Badge>
+        <Badge tone="positive">{t('inventory.can.direct')}</Badge>
       {/if}
-      <Tooltip text="Based on its hardest-to-find ingredient"><Badge tone={RAR_TONE[x.rar]}>{RN[x.rar]}</Badge></Tooltip>
+      <Tooltip text={t('inventory.can.rar.tip')}
+        ><Badge tone={RAR_TONE[x.rar]}>{rarityLabel(x.rar)}</Badge></Tooltip
+      >
       {#if notInSave(x.k)}
-        <Tooltip
-          text="Your save has no item of this kind to copy, so it cannot be written into the save. Craft this one in the game."
-          ><Badge tone="critical">game only</Badge></Tooltip
+        <Tooltip text={t('inventory.can.gameOnly.tip')}
+          ><Badge tone="critical">{t('inventory.can.gameOnly')}</Badge></Tooltip
         >
       {/if}
       {#if r.m === 'kit'}
-        <Tooltip text="Needs the Crafter's Kit gift bag mod"><Badge tone="caution">crafter's kit</Badge></Tooltip>
+        <Tooltip text={t('mod.kit.tip')}><Badge tone="caution">{t('mod.kit')}</Badge></Tooltip>
       {:else if r.m === 'herb'}
-        <Tooltip text="Needs the Herb Gardens gift bag mod"><Badge tone="positive">herb gardens</Badge></Tooltip>
+        <Tooltip text={t('mod.herb.tip')}><Badge tone="positive">{t('mod.herb')}</Badge></Tooltip>
       {/if}
-      {#if r.b}<Badge tone="info">enchant</Badge>{/if}
+      {#if r.b}<Badge tone="info">{t('kind.enchant')}</Badge>{/if}
       {#if fx}<span class="note fx">{fx}</span>{/if}
     {/if}
   </div>
@@ -55,34 +59,36 @@
     {#each r.in as e, si (si)}
       {#if si}<span class="plus">+</span>{/if}
       {#each e.o as k, oi (k)}
-        {#if oi}<span class="or">or</span>{/if}
+        {#if oi}<span class="or">{t('inventory.can.or')}</span>{/if}
         <ItemChip {k} q={e.q} tool={!!e.t} />
       {/each}
     {/each}
     {#if r.st && !blocked}
-      <span class="at">at</span>
+      <span class="at">{t('inventory.can.at')}</span>
       {#each r.st as k, oi (k)}
-        {#if oi}<span class="or">or</span>{/if}
+        {#if oi}<span class="or">{t('inventory.can.or')}</span>{/if}
         <ItemChip {k} tool />
       {/each}
     {/if}
   </div>
-  <div class="pr" title="Base value of one. ≈ means estimated from its ingredients.">
+  <div class="pr" title={t('inventory.can.value.tip')}>
     <b>{pt}</b>
     {#if !blocked}
       {#if x.val}
-        <span>uses {x.used} <i class:up={gain > 0} class:dn={gain < 0}>{gain > 0 ? '+' : ''}{gain}</i></span>
+        <span>{t('inventory.can.uses', { n: x.used })} <i class:up={gain > 0} class:dn={gain < 0}>{gain > 0 ? '+' : ''}{gain}</i></span>
       {:else}
-        <span>no value known</span>
+        <span>{t('inventory.can.noValue')}</span>
       {/if}
     {/if}
   </div>
   <div class="rb">
     {#if blocked}
-      <Button disabled>Craft</Button>
+      <Button disabled>{t('inventory.can.craft')}</Button>
     {:else}
-      <Button variant="primary" onclick={() => qadd(x.k)}>Craft</Button>
-      <Button variant="ghost" title="Open in the planner" onclick={() => planRecipe(r.i)}>Plan</Button>
+      <Button variant="primary" onclick={() => qadd(x.k)}>{t('inventory.can.craft')}</Button>
+      <Button variant="ghost" title={t('inventory.can.plan.tip')} onclick={() => planRecipe(r.i)}
+        >{t('plan')}</Button
+      >
     {/if}
   </div>
 </div>

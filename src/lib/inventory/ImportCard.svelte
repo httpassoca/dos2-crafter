@@ -2,6 +2,8 @@
 <script lang="ts">
   import { Card, Textarea, Button, FileDrop, Spinner, toast } from 'dssoca'
   import { inv, importList, exportText, emptyInventory, loadFile } from './inv.svelte'
+  import { importMsg } from './messages'
+  import { t } from '../i18n/index.svelte'
 
   let files: File[] = $state([])
   function onfiles(fs: File[]) {
@@ -11,13 +13,13 @@
   }
 
   async function copy() {
-    const t = exportText()
-    inv.text = t
+    const text = exportText()
+    inv.text = text
     try {
-      await navigator.clipboard.writeText(t)
-      toast.success('Your inventory is in the box above and on the clipboard.')
+      await navigator.clipboard.writeText(text)
+      toast.success(t('inventory.import.copied'))
     } catch {
-      toast.info('Your inventory is in the box above. Copy it from there.')
+      toast.info(t('inventory.import.copiedBox'))
     }
   }
 
@@ -36,45 +38,44 @@
   }
 </script>
 
-<Card title="Import a list" meta="one item per line">
+<Card title={t('inventory.import.title')} meta={t('inventory.import.meta')}>
   <div class="body">
     <Textarea
       bind:value={inv.text}
       rows={6}
-      aria-label="Item list"
+      aria-label={t('inventory.import.aria')}
       placeholder={'12 Bone\nEmpty Potion Bottle x4\nPenny Bun Mushroom: 3'}
     />
     <div class="acts">
-      <Button variant="primary" onclick={() => importList(inv.text)}>Import list</Button>
-      <Button variant="ghost" onclick={copy}>Copy my inventory</Button>
+      <Button variant="primary" onclick={() => importList(inv.text)}>{t('inventory.import.btn')}</Button>
+      <Button variant="ghost" onclick={copy}>{t('inventory.import.copy')}</Button>
       <Button variant={armed ? 'danger' : 'ghost'} onclick={empty}>
-        {armed ? 'Click again to confirm' : 'Empty inventory'}
+        {armed ? t('inventory.import.confirm') : t('inventory.import.empty')}
       </Button>
     </div>
     <FileDrop
-      label="Load a save or list"
+      label={t('inventory.import.drop')}
       accept=".lsv,.lsf,.lsx,.xml,.txt,.csv,.json"
       disabled={!!inv.loading}
       bind:files
       {onfiles}
     />
     {#if inv.loading}
-      <p class="msg"><Spinner label="Reading {inv.loading}…" showLabel /></p>
+      <p class="msg"><Spinner label={t('inventory.import.reading', { name: inv.loading })} showLabel /></p>
     {:else if inv.result}
       <div class="msg" class:warn={inv.result.warn} role="status">
-        <p>{inv.result.text}</p>
+        <p>{importMsg(inv.result.text)}</p>
         {#if inv.result.skip?.length}
           <details>
-            <summary>Show the {inv.result.skip.length} skipped ids</summary>
+            <summary>{t('inventory.import.skipped', { n: inv.result.skip.length })}</summary>
             <span class="ids">{inv.result.skip.join(', ')}</span>
           </details>
         {/if}
       </div>
     {:else}
       <p class="msg">
-        Accepts “12 Bone”, “Bone x12”, “Bone: 12”, or a JSON object of name to count. Importing sets the count for each
-        item listed and leaves the rest alone. Loading a <b>.lsv</b> save file replaces the whole inventory with what
-        your party is carrying. Drop the save or a list file on the box above, or click it to pick one.
+        {t('inventory.import.helpPre')} <b>.lsv</b>
+        {t('inventory.import.helpPost')}
       </p>
     {/if}
   </div>

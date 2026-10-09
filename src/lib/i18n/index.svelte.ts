@@ -40,7 +40,9 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   const dict = lang === 'pt-BR' ? PT : EN
   let k = key
   if (vars && typeof vars.n === 'number') {
-    const pk = `${key}_${plurals[lang].select(vars.n)}`
+    // CLDR puts 0 in pt's "one" bucket ("0 item"); Brazilian usage is plural ("0 itens").
+    const cat = lang === 'pt-BR' && vars.n === 0 ? 'other' : plurals[lang].select(vars.n)
+    const pk = `${key}_${cat}`
     if (pk in dict || pk in EN) k = pk
     else if (`${key}_other` in dict || `${key}_other` in EN) k = `${key}_other`
   }
