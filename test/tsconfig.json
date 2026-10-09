@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": { "types": ["node", "svelte", "vite/client"], "checkJs": false, "tsBuildInfoFile": "../node_modules/.tmp/tsconfig.test.tsbuildinfo" },
+  "include": ["./*.ts", "../vitest.config.ts"]
+}
