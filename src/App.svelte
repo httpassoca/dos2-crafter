@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Topbar, Switch, Button, Toaster, SearchPalette, ShortcutsHelp, Tooltip, applyDesignConfig, shortcut } from 'dssoca'
+  import { Topbar, BottomNav, Switch, Button, Toaster, SearchPalette, ShortcutsHelp, Tooltip, applyDesignConfig, shortcut } from 'dssoca'
   import type { SearchPaletteItem } from 'dssoca'
   import { I, R, allItems, craftable, nm, makes } from './lib/core/data'
   import { S, type Tab } from './lib/state.svelte'
@@ -21,6 +21,14 @@
 
   // phones: mod switches drop their visible labels (tooltip + accessible name stay)
   const narrow = new MediaQuery('max-width: 720px')
+  // ≤520px the Topbar hides its tab strip (dssoca); the BottomNav takes over
+  const phone = new MediaQuery('max-width: 520px')
+  const NAV = [
+    { id: 'inv', label: 'inventory', icon: 'briefcase' },
+    { id: 'plan', label: 'planner', icon: 'target' },
+    { id: 'rec', label: 'recipes', icon: 'book' },
+    { id: 'notes', label: 'notes', icon: 'note' },
+  ] as const
 
   // theme: '' follows dssoca's default (dark)
   $effect(() => {
@@ -76,10 +84,10 @@
     {/snippet}
     {#snippet userMenu()}
       <div class="mods" role="group" aria-label="Gift bag mods">
-        <Tooltip text="Crafter's Kit gift bag. Its recipes are only planned when on.">
+        <Tooltip placement="bottom" text="Crafter's Kit gift bag. Its recipes are only planned when on.">
           <Switch label="crafter's kit" labelHidden={narrow.current} checked={S.mods.kit} onchange={(v) => (S.mods.kit = v)} />
         </Tooltip>
-        <Tooltip text="Herb Gardens gift bag. Its recipes are only planned when on.">
+        <Tooltip placement="bottom" text="Herb Gardens gift bag. Its recipes are only planned when on.">
           <Switch label="herb gardens" labelHidden={narrow.current} checked={S.mods.herb} onchange={(v) => (S.mods.herb = v)} />
         </Tooltip>
       </div>
@@ -87,7 +95,7 @@
     {/snippet}
   </Topbar>
 
-  <main id="main" class="view">
+  <main id="main" class="view" class:phone={phone.current}>
     {#if S.tab === 'inv'}
       <Inventory />
     {:else if S.tab === 'plan'}
@@ -98,6 +106,9 @@
       <Notes />
     {/if}
   </main>
+  {#if phone.current}
+    <BottomNav items={[...NAV]} active={S.tab} onSelect={(t) => (S.tab = t as Tab)} ariaLabel="Sections" />
+  {/if}
 </div>
 
 <SearchPalette
@@ -133,6 +144,9 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+  }
+  .view.phone {
+    padding-bottom: calc(max(var(--ss-bottom-nav-h, var(--ss-shell-top-h)), 44px) + env(safe-area-inset-bottom, 0px));
   }
   .mark {
     width: 10px;

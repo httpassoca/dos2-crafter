@@ -216,6 +216,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--ss-s-1);
+    font-size: var(--ss-ui-sm);
+    line-height: var(--ss-leading);
     color: var(--ss-fg-muted);
   }
   .risk .wl {

@@ -10,6 +10,8 @@ body {
   color: var(--ss-fg);
 }
 #app {
+  // hidden tooltip bubbles near the right edge must not widen the page on phones
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   min-height: 0;
