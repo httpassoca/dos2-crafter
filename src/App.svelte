@@ -4,6 +4,7 @@
   import { I, R, allItems, craftable, nm, makes } from './lib/core/data'
   import { S, type Tab } from './lib/state.svelte'
   import { ui, openItem, addTarget } from './lib/ui.svelte'
+  import { MediaQuery } from 'svelte/reactivity'
   import ItemIcon from './lib/components/ItemIcon.svelte'
   import ItemDrawer from './lib/components/ItemDrawer.svelte'
   import Inventory from './lib/tabs/Inventory.svelte'
@@ -17,6 +18,9 @@
     { id: 'rec', label: 'recipes' },
     { id: 'notes', label: 'notes' },
   ]
+
+  // phones: mod switches drop their visible labels (tooltip + accessible name stay)
+  const narrow = new MediaQuery('max-width: 720px')
 
   // theme: '' follows dssoca's default (dark)
   $effect(() => {
@@ -73,10 +77,10 @@
     {#snippet userMenu()}
       <div class="mods" role="group" aria-label="Gift bag mods">
         <Tooltip text="Crafter's Kit gift bag. Its recipes are only planned when on.">
-          <Switch label="crafter's kit" checked={S.mods.kit} onchange={(v) => (S.mods.kit = v)} />
+          <Switch label="crafter's kit" labelHidden={narrow.current} checked={S.mods.kit} onchange={(v) => (S.mods.kit = v)} />
         </Tooltip>
         <Tooltip text="Herb Gardens gift bag. Its recipes are only planned when on.">
-          <Switch label="herb gardens" checked={S.mods.herb} onchange={(v) => (S.mods.herb = v)} />
+          <Switch label="herb gardens" labelHidden={narrow.current} checked={S.mods.herb} onchange={(v) => (S.mods.herb = v)} />
         </Tooltip>
       </div>
       <Button variant="ghost" iconOnly label="Switch between dark and light" onclick={toggleTheme}>◐</Button>
