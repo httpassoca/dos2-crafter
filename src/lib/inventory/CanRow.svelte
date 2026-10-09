@@ -174,10 +174,11 @@
     }
   }
 
-  // wide column: the original's four-column row
-  @container craftlist (min-width: 900px) {
+  // wide column: four-column row, item info gets 2/3 of the flexible space.
+  // Below 1100px the ingredients column would be ~220px and wrap, so rows stay stacked.
+  @container craftlist (min-width: 1100px) {
     .rec {
-      grid-template-columns: minmax(260px, 430px) minmax(0, 1fr) 92px auto;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 92px auto;
     }
     .res,
     .ins {
