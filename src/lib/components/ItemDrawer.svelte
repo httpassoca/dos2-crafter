@@ -1,5 +1,6 @@
 <!-- Item details, as a side sheet over the page. Opens when ui.item is set (legacy openItem / closeDrawer). -->
 <script lang="ts">
+  import { valueSource as srcOf } from '../values'
   import { Modal, Badge, Button, NumberField, Link, Tooltip, Card } from 'dssoca'
   import { I, makes, uses, nm } from '../core/data'
   import { VAL, RAR, ptxt, recipeFor, enabled, kind } from '../core/engine'
@@ -29,9 +30,10 @@
       cur: cur && enabled(cur) ? (cur.i as number) : -1,
     }
   })
-  const valueSource = $derived(
-    t(`recipes.drawer.valueSource.${it?.v ? (it.vs === 'f' ? 'fextra' : 'list') : 'est'}`),
-  )
+  const valueSource = $derived.by(() => {
+    void P.values.v // overrides are applied to the item data during valuation
+    return k ? t(`recipes.drawer.valueSource.${srcOf(k)}`) : ''
+  })
   const borrowed = $derived(!!(it as { p?: unknown } | null)?.p)
 
   // back to the top when another item opens in place

@@ -12,16 +12,18 @@
   import Planner from './lib/tabs/Planner.svelte'
   import Recipes from './lib/tabs/Recipes.svelte'
   import Notes from './lib/tabs/Notes.svelte'
+  import Config from './lib/tabs/Config.svelte'
 
   const TABS = $derived([
     { id: 'inv', label: t('app.tab.inv') },
     { id: 'plan', label: t('app.tab.plan') },
     { id: 'rec', label: t('app.tab.rec') },
     { id: 'notes', label: t('app.tab.notes') },
+    { id: 'config', label: t('app.tab.config') },
   ])
 
-  // below 1280px the mod switches drop their visible labels (tooltip + accessible name stay)
-  const narrow = new MediaQuery('max-width: 1279px')
+  // below 1600px the mod switches drop their visible labels (tooltip + accessible name stay)
+  const narrow = new MediaQuery('max-width: 1599px')
   // bigger chrome needs the room: md/lg (and narrow screens) drop the stat segments, lg also compacts the mods
   const compactMods = $derived(narrow.current || S.size === 'lg')
   const stats = $derived(
@@ -32,16 +34,39 @@
         ]
       : [],
   )
-  // When the header cannot fit its tab strip, the tabs move to a BottomNav. dssoca's Topbar
-  // hides its strip at 520px; with the mods and size controls this header needs more room,
-  // and more again as the size axis grows.
-  const fitsTabs = {
-    sm: new MediaQuery('min-width: 761px'),
-    md: new MediaQuery('min-width: 901px'),
-    lg: new MediaQuery('min-width: 1181px'),
+  // When the header cannot fit its tab strip, the tabs move to a BottomNav. Measured, not
+  // breakpoints: the strip's width changes with the language, the size axis and the tab count.
+  // Widths are remembered from the last full layout so the compact layout cannot flip back early.
+  let barEl: HTMLDivElement | undefined = $state()
+  let phone = $state(false)
+  let full = { tabs: 0, rest: 0 }
+  function measure() {
+    const bar = barEl?.querySelector<HTMLElement>('.ss-topbar')
+    if (!bar) return
+    if (window.innerWidth <= 520) return void (phone = true) // dssoca hides the strip itself here
+    if (!phone) {
+      const ws = bar.querySelector<HTMLElement>('.ws')
+      let rest = 0
+      for (const c of bar.children as HTMLCollectionOf<HTMLElement>)
+        if (c !== ws && !c.matches('.grow, .skip')) rest += c.getBoundingClientRect().width
+      full = { tabs: ws ? ws.scrollWidth : 0, rest }
+    }
+    phone = full.rest + full.tabs > bar.clientWidth - 1
   }
-  const phone = $derived(!fitsTabs[S.size || 'sm'].current)
-  const ICONS = { inv: 'briefcase', plan: 'target', rec: 'book', notes: 'note' } as const
+  $effect(() => {
+    if (!barEl) return
+    const ro = new ResizeObserver(() => measure())
+    ro.observe(barEl)
+    return () => ro.disconnect()
+  })
+  // labels change width with the language and size: lay out in full again, then re-measure
+  $effect(() => {
+    void S.lang
+    void S.size
+    phone = false
+    requestAnimationFrame(() => requestAnimationFrame(measure))
+  })
+  const ICONS = { inv: 'briefcase', plan: 'target', rec: 'book', notes: 'note', config: 'settings' } as const
   const NAV = $derived(TABS.map((x) => ({ ...x, icon: ICONS[x.id as keyof typeof ICONS] })))
 
   // theme: '' follows dssoca's default (dark)
@@ -97,7 +122,9 @@
   {@attach shortcut(() => ({ id: 'app:tab-plan', label: t('app.sc.plan'), keys: '2', group: t('app.sc.groupTabs'), onPress: goTab('plan') }))}
   {@attach shortcut(() => ({ id: 'app:tab-rec', label: t('app.sc.rec'), keys: '3', group: t('app.sc.groupTabs'), onPress: goTab('rec') }))}
   {@attach shortcut(() => ({ id: 'app:tab-notes', label: t('app.sc.notes'), keys: '4', group: t('app.sc.groupTabs'), onPress: goTab('notes') }))}
+  {@attach shortcut(() => ({ id: 'app:tab-config', label: t('app.sc.config'), keys: '5', group: t('app.sc.groupTabs'), onPress: goTab('config') }))}
 >
+  <div class="bar" bind:this={barEl}>
   <Topbar
     tabs={phone ? [] : TABS}
     active={S.tab}
@@ -130,6 +157,7 @@
       <Button variant="ghost" iconOnly label={t('app.theme')} onclick={toggleTheme}>◐</Button>
     {/snippet}
   </Topbar>
+  </div>
 
   <main id="main" class="view" class:phone>
     {#if S.tab === 'inv'}
@@ -138,8 +166,10 @@
       <Planner />
     {:else if S.tab === 'rec'}
       <Recipes />
-    {:else}
+    {:else if S.tab === 'notes'}
       <Notes />
+    {:else}
+      <Config />
     {/if}
   </main>
   {#if phone}
@@ -171,6 +201,9 @@
 <Toaster position="bottom-right" />
 
 <style lang="scss">
+  .bar {
+    flex: none;
+  }
   .shell {
     display: flex;
     flex-direction: column;

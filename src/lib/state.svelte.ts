@@ -4,7 +4,7 @@ import { I } from './core/data'
 export const SKEY = 'dos2craft:v1'
 
 export type Lang = 'en' | 'pt-BR'
-export type Tab = 'inv' | 'plan' | 'rec' | 'notes'
+export type Tab = 'inv' | 'plan' | 'rec' | 'notes' | 'config'
 export interface Target {
   k: string
   q: number
@@ -27,6 +27,10 @@ export interface Persisted {
   size: 'sm' | 'md' | 'lg'
   /** UI language; item and recipe data stay in English */
   lang: Lang
+  /** inventory scan options: deep = intermediate crafts, tools = stations nearby, hand = assume hand tools */
+  iv: { deep: number; tools: number; hand: number }
+  /** item key → the player's own base value; only items they changed are stored */
+  values: Record<string, number>
   /** stock as read from the loaded save */
   base?: Record<string, number> | null
   /** unsaved edits stashed when another save was loaded */
@@ -47,6 +51,8 @@ const fresh = (): Persisted => ({
   zoom: 0.75,
   theme: '',
   size: 'sm',
+  iv: { deep: 1, tools: 1, hand: 1 },
+  values: {},
   lang: typeof navigator !== 'undefined' && /^pt\b/i.test(navigator.language) ? 'pt-BR' : 'en',
 })
 
@@ -57,6 +63,10 @@ function load(): Persisted {
     if (s && Array.isArray(s.targets)) {
       Object.assign(S, s)
       S.targets = S.targets.filter((t) => I[t.k])
+      S.iv = { ...fresh().iv, ...(s.iv || {}) }
+      S.values = Object.fromEntries(
+        Object.entries((s.values || {}) as Record<string, unknown>).filter(([k, v]) => I[k] && Number.isFinite(v) && (v as number) > 0),
+      ) as Record<string, number>
     }
   } catch {
     /* private window or blocked storage */
@@ -74,15 +84,15 @@ export function save() {
   }
 }
 
-/** wipe plan and stock, keep theme, size and language */
+/** wipe plan and stock; settings (theme, size, language, scan options, item values) are kept */
 export function resetAll() {
-  const { theme, size, lang } = S
-  Object.assign(S, fresh(), { targets: [], tab: 'notes', theme, size, lang, base: null, stash: null, saveName: '', creatable: undefined })
+  const { theme, size, lang, iv, values } = S
+  Object.assign(S, fresh(), { targets: [], tab: 'notes', theme, size, lang, iv, values, base: null, stash: null, saveName: '', creatable: undefined })
   save()
 }
 
-/** inventory scan options: deep = intermediate crafts, tools = stations nearby, hand = assume hand tools */
-export const IV = $state({ deep: 1, tools: 1, hand: 1 })
+/** inventory scan options (persisted as S.iv; the engine reads them as IV) */
+export const IV = S.iv
 
 export interface QueueEntry {
   k: string

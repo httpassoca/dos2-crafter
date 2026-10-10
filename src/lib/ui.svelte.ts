@@ -2,12 +2,15 @@
 import { I, R } from './core/data'
 import { costs, compute, recipesFor, recipeFor } from './core/engine'
 import { S, save } from './state.svelte'
+import { applyOverrides } from './values'
 
 let gen = 0
 // costs() fills the engine's value / rarity / best-recipe tables. They depend on which mods are on.
 const values = $derived.by(() => {
   void S.mods.kit
   void S.mods.herb
+  // player-set values replace the shipped ones before valuing everything else
+  applyOverrides($state.snapshot(S.values))
   costs()
   return { v: ++gen }
 })

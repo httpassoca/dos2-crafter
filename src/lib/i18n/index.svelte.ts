@@ -7,6 +7,7 @@ import { planner } from './planner'
 import { inventory } from './inventory'
 import { recipes } from './recipes'
 import { notes } from './notes'
+import { config } from './config'
 
 export type { Lang }
 export type Dict = Record<string, string>
@@ -16,7 +17,7 @@ export interface Area {
   pt: Dict
 }
 
-export const AREAS: Record<string, Area> = { common, app, planner, inventory, recipes, notes }
+export const AREAS: Record<string, Area> = { common, app, planner, inventory, recipes, notes, config }
 
 const EN: Dict = Object.assign({}, ...Object.values(AREAS).map((a) => a.en))
 const PT: Dict = Object.assign({}, ...Object.values(AREAS).map((a) => a.pt))

@@ -11,6 +11,8 @@ Styled with the **dssoca** design system (npm `dssoca`, source + docs at `../dss
 - `src/lib/core/save.ts` — LSPK v13 / LSF v3 reader + writer (after LSLib), ported verbatim.
 - `src/lib/core/writer.ts` — write pipeline: `prepareWrite` → `groupChanges` → `buildWrite`.
 - `src/lib/state.svelte.ts` — persisted state `S` (localStorage `dos2craft:v1`), `IV`, `Q`, `SAVE`.
+- `src/lib/values.ts` — player item values: `applyOverrides(S.values)` writes them into `I` before each
+  valuation (originals kept in `ORIGINAL`); only changed items are stored.
 - `src/lib/ui.svelte.ts` — `P.values` / `P.plan` deriveds, `openItem`, `addTarget`, `planRecipe`, …
 - `src/lib/tabs/*.svelte` — one per tab. `src/lib/components/` — shared UI (ItemIcon, ItemDrawer).
 
